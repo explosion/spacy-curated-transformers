@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 def setup_package():
     setup(
-        name="curated-transformers",
+        name="spacy-curated-transformers",
         packages=find_packages(),
     )
 
