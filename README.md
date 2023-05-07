@@ -25,7 +25,7 @@ change in incompatible ways.
 ## ⏳ Install
 
 ```bash
-pip install curated-transformers
+pip install spacy-curated-transformers
 ```
 
 ## 🚀 Quickstart

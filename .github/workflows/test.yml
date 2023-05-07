@@ -43,12 +43,12 @@ jobs:
         run: python -m build --sdist
 
       - name: Run mypy
-        run: mypy curated_transformers
+        run: mypy spacy_curated_transformers
 
       - name: Delete source directory
         run: |
-          cp curated_transformers/tests/conftest.py .
-          rm -rf curated_transformers
+          cp spacy_curated_transformers/tests/conftest.py .
+          rm -rf spacy_curated_transformers
         shell: bash
 
       - name: Uninstall all packages
@@ -69,7 +69,7 @@ jobs:
           python -m pip install fugashi[unidic-lite] spacy[ja]
 
       - name: Run pytest
-        run: python -m pytest --pyargs curated_transformers --slow
+        run: python -m pytest --pyargs spacy_curated_transformers --slow
 
       - name: Install HF transformers
         id: init-hf-transformers
@@ -89,4 +89,4 @@ jobs:
           enableCrossOsArchive: true
 
       - name: Run pytest (w/t HF transformers)
-        run: python -m pytest --pyargs curated_transformers --slow
+        run: python -m pytest --pyargs spacy_curated_transformers --slow
