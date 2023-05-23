@@ -141,6 +141,7 @@ def build_albert_transformer_model_v1(
         encoder = AlbertEncoder(config)
         transformer = _pytorch_encoder(
             encoder,
+            hidden_width=hidden_width,
             mixed_precision=mixed_precision,
             grad_scaler_config=grad_scaler_config,
         )
@@ -241,6 +242,7 @@ def build_bert_transformer_model_v1(
         encoder = BertEncoder(config)
         transformer = _pytorch_encoder(
             encoder,
+            hidden_width=hidden_width,
             mixed_precision=mixed_precision,
             grad_scaler_config=grad_scaler_config,
         )
@@ -272,7 +274,9 @@ def build_camembert_transformer_model_v1(
     num_hidden_layers: int = 12,
     padding_idx: int = 1,
     type_vocab_size: int = 1,
+    mixed_precision: bool = False,
     torchscript=False,
+    grad_scaler_config: dict = SimpleFrozenDict(),
 ) -> TransformerModelT:
     """Construct a CamemBERT transformer model.
 
@@ -337,7 +341,12 @@ def build_camembert_transformer_model_v1(
         )
     else:
         encoder = RobertaEncoder(config)
-        transformer = _pytorch_encoder(encoder)
+        transformer = _pytorch_encoder(
+            encoder,
+            hidden_width=hidden_width,
+            mixed_precision=mixed_precision,
+            grad_scaler_config=grad_scaler_config,
+        )
 
     return build_transformer_model_v1(
         with_spans=with_spans,
@@ -435,6 +444,7 @@ def build_roberta_transformer_model_v1(
         encoder = RobertaEncoder(config)
         transformer = _pytorch_encoder(
             encoder,
+            hidden_width=hidden_width,
             mixed_precision=mixed_precision,
             grad_scaler_config=grad_scaler_config,
         )
@@ -535,6 +545,7 @@ def build_xlmr_transformer_model_v1(
         encoder = RobertaEncoder(config)
         transformer = _pytorch_encoder(
             encoder,
+            hidden_width=hidden_width,
             mixed_precision=mixed_precision,
             grad_scaler_config=grad_scaler_config,
         )
@@ -576,6 +587,7 @@ def build_transformer_model_v1(
             "replace_listener": _replace_listener,
             "replace_listener_cfg": _replace_listener_cfg,
         },
+        dims={"nO": transformer.get_dim("nO")},
     )
 
 
@@ -603,6 +615,7 @@ def transformer_model_init(
 
 def _pytorch_encoder(
     encoder: CuratedEncoderT,
+    hidden_width: int,
     *,
     mixed_precision: bool = False,
     grad_scaler_config: dict = SimpleFrozenDict(),
@@ -625,6 +638,7 @@ def _pytorch_encoder(
         mixed_precision=mixed_precision,
         grad_scaler=PyTorchGradScaler(**grad_scaler_config),
     )
+    model.set_dim("nO", hidden_width)
 
     # This attribute is set by the parent Pipe instance before each forward pass.
     model.attrs["_all_layer_outputs"] = True

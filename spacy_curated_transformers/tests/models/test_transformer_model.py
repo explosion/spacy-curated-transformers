@@ -9,9 +9,13 @@ from spacy_curated_transformers.models.architectures import (
     build_roberta_transformer_model_v1,
     build_xlmr_transformer_model_v1,
 )
-from spacy_curated_transformers.models.hf_loader import build_hf_transformer_encoder_loader_v1
+from spacy_curated_transformers.models.hf_loader import (
+    build_hf_transformer_encoder_loader_v1,
+)
 from spacy_curated_transformers.models.output import TransformerModelOutput
-from spacy_curated_transformers.models.with_strided_spans import build_with_strided_spans_v1
+from spacy_curated_transformers.models.with_strided_spans import (
+    build_with_strided_spans_v1,
+)
 from spacy_curated_transformers.tokenization import (
     build_bert_wordpiece_encoder_v1,
     build_byte_bpe_encoder_v1,
@@ -31,10 +35,8 @@ if has_cupy:
 
 
 @pytest.fixture
-def toy_model(test_dir):
-    return SentencePieceProcessor.from_file(
-        (str(test_dir / ".." / "tokenization" / "toy.model"))
-    )
+def toy_model(sentencepiece_toy_model_path):
+    return SentencePieceProcessor.from_file(sentencepiece_toy_model_path)
 
 
 @pytest.mark.slow

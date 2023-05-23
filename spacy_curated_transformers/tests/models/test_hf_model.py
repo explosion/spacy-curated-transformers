@@ -12,7 +12,9 @@ from torch.nn import Module
 
 from spacy_curated_transformers._compat import has_hf_transformers, transformers
 from spacy_curated_transformers.models.architectures import _pytorch_encoder
-from spacy_curated_transformers.models.hf_loader import build_hf_transformer_encoder_loader_v1
+from spacy_curated_transformers.models.hf_loader import (
+    build_hf_transformer_encoder_loader_v1,
+)
 
 from ..util import torch_assertclose
 
@@ -22,19 +24,32 @@ class ModelConfig:
     config: BertConfig
     encoder: Callable[[BertConfig], Module]
     hf_model_name: str
+    hidden_width: int
 
 
 TEST_MODELS = [
-    ModelConfig(AlbertConfig(vocab_size=30000), AlbertEncoder, "albert-base-v2"),
-    ModelConfig(BertConfig(vocab_size=28996), BertEncoder, "bert-base-cased"),
-    ModelConfig(RobertaConfig(), RobertaEncoder, "roberta-base"),
-    ModelConfig(RobertaConfig(vocab_size=250002), RobertaEncoder, "xlm-roberta-base"),
+    ModelConfig(
+        AlbertConfig(vocab_size=30000),
+        AlbertEncoder,
+        "albert-base-v2",
+        hidden_width=768,
+    ),
+    ModelConfig(
+        BertConfig(vocab_size=28996), BertEncoder, "bert-base-cased", hidden_width=768
+    ),
+    ModelConfig(RobertaConfig(), RobertaEncoder, "roberta-base", hidden_width=768),
+    ModelConfig(
+        RobertaConfig(vocab_size=250002),
+        RobertaEncoder,
+        "xlm-roberta-base",
+        hidden_width=768,
+    ),
 ]
 
 
 def encoder_from_config(config: ModelConfig):
     encoder = config.encoder(config.config)
-    model = _pytorch_encoder(encoder)
+    model = _pytorch_encoder(encoder, config.hidden_width)
     model.init = build_hf_transformer_encoder_loader_v1(name=config.hf_model_name)
     return model
 

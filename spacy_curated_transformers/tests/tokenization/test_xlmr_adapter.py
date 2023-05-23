@@ -15,14 +15,16 @@ from spacy_curated_transformers.tokenization.sentencepiece_adapters import (
 from spacy_curated_transformers.tokenization.wordpiece_encoder import (
     build_wordpiece_encoder_v1,
 )
-from spacy_curated_transformers.tokenization.hf_loader import build_hf_piece_encoder_loader_v1
+from spacy_curated_transformers.tokenization.hf_loader import (
+    build_hf_piece_encoder_loader_v1,
+)
 from spacy_curated_transformers.models.output import TransformerModelOutput
 from spacy_curated_transformers.models.remove_eos_bos import remove_bos_eos
 
 
 @pytest.fixture
-def toy_model(test_dir):
-    return SentencePieceProcessor.from_file(str(test_dir / "toy.model"))
+def toy_model(sentencepiece_toy_model_path):
+    return SentencePieceProcessor.from_file(str(sentencepiece_toy_model_path))
 
 
 @pytest.fixture

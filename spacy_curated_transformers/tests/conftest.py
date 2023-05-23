@@ -60,6 +60,11 @@ def sample_docs():
 
 
 @pytest.fixture
+def sentencepiece_toy_model_path():
+    return Path(__file__).parent / "tokenization" / "toy.model"
+
+
+@pytest.fixture
 def wordpiece_toy_model_path():
     return Path(__file__).parent / "tokenization" / "toy.wordpieces"
 

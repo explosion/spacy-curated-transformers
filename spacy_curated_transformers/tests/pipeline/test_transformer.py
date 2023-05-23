@@ -16,7 +16,9 @@ from spacy_curated_transformers.models.architectures import (
     build_bert_transformer_model_v1,
     build_roberta_transformer_model_v1,
 )
-from spacy_curated_transformers.models.hf_loader import build_hf_transformer_encoder_loader_v1
+from spacy_curated_transformers.models.hf_loader import (
+    build_hf_transformer_encoder_loader_v1,
+)
 from spacy_curated_transformers.models.with_strided_spans import (
     build_with_strided_spans_v1,
 )
@@ -28,6 +30,9 @@ from spacy_curated_transformers.tokenization import (
     build_xlmr_sentencepiece_encoder_v1,
 )
 from spacy_curated_transformers.pipeline.transformer import make_transformer
+from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
+    build_sentencepiece_encoder_loader_v1,
+)
 from spacy_curated_transformers.util import create_gradual_transformer_unfreezing
 from spacy_curated_transformers._compat import has_hf_transformers, transformers
 
@@ -338,6 +343,24 @@ def test_roberta_transformer_pipe_against_hf():
             hf_doc_encoding[:encoding_len][1:-1],
             torch.tensor(doc._.trf_data.last_hidden_layer_state.dataXd),
         )
+
+
+def test_empty_input(sentencepiece_toy_model_path):
+    nlp = spacy.blank("en")
+    model = build_xlmr_transformer_model_v1(
+        piece_encoder=build_xlmr_sentencepiece_encoder_v1(),
+        with_spans=build_with_strided_spans_v1(),
+        num_hidden_layers=2,
+        vocab_size=1000,
+        hidden_width=12,
+    )
+
+    model.get_ref("piece_encoder").init = build_sentencepiece_encoder_loader_v1(
+        path=sentencepiece_toy_model_path
+    )
+    model.initialize()
+    pipe = make_transformer(nlp, "transformer", model)
+    pipe(nlp.make_doc(""))
 
 
 @pytest.mark.slow
