@@ -4,21 +4,18 @@ from thinc.api import Ragged, registry, get_current_ops
 from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
     build_sentencepiece_encoder_v1,
 )
-from spacy_curated_transformers.tokenization.hf_loader import build_hf_piece_encoder_loader_v1
+from spacy_curated_transformers.tokenization.hf_loader import (
+    build_hf_piece_encoder_loader_v1,
+)
 from spacy_curated_transformers._compat import has_hf_transformers
 
 
 @pytest.fixture
-def toy_model_path(test_dir):
-    return test_dir / "toy.model"
-
-
-@pytest.fixture
-def toy_encoder(toy_model_path):
+def toy_encoder(sentencepiece_toy_model_path):
     encoder = build_sentencepiece_encoder_v1()
     encoder.init = registry.model_loaders.get(
         "spacy-curated-transformers.SentencepieceLoader.v1"
-    )(path=toy_model_path)
+    )(path=sentencepiece_toy_model_path)
     encoder.initialize()
     return encoder
 
