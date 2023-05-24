@@ -2,7 +2,7 @@ from typing import Callable, List, Optional, Tuple
 from pathlib import Path
 import unicodedata
 
-from cutlery import WordPieceProcessor
+from curated_tokenizers import WordPieceProcessor
 from thinc.api import Model, Ragged, deserialize_attr, serialize_attr
 
 from .types import (

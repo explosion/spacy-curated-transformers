@@ -1,6 +1,6 @@
 from typing import Callable, Optional, Tuple
 from pathlib import Path
-from cutlery import SentencePieceProcessor
+from curated_tokenizers import SentencePieceProcessor
 from thinc.api import Model, Ragged, chain, deserialize_attr, serialize_attr
 
 from .sentencepiece_adapters import build_camembert_adapter, build_xlmr_adapter

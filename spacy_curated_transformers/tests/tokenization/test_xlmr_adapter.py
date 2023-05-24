@@ -1,5 +1,5 @@
 from typing import List
-from cutlery import SentencePieceProcessor
+from curated_tokenizers import SentencePieceProcessor
 import pytest
 from thinc.api import Ragged, chain, Model, get_current_ops, NumpyOps
 from thinc.util import convert_recursive, is_cupy_array

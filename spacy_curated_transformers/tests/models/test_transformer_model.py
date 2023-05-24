@@ -1,5 +1,5 @@
 import pytest
-from cutlery import SentencePieceProcessor
+from curated_tokenizers import SentencePieceProcessor
 from thinc.api import CupyOps, NumpyOps, Ragged, registry
 from thinc.compat import has_cupy
 
