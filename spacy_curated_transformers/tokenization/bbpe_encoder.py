@@ -1,7 +1,7 @@
 from typing import Callable, Optional, Tuple
 from pathlib import Path
 
-from cutlery import ByteBPEProcessor
+from curated_tokenizers import ByteBPEProcessor
 import srsly
 from thinc.api import Model, Ragged, deserialize_attr, serialize_attr
 
