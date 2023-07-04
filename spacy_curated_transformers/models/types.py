@@ -1,12 +1,14 @@
 from typing import Any, Callable, Iterable, List, Union
 
 from spacy.tokens.doc import Doc
+
 from thinc.model import Model
 from thinc.types import Floats2d, Ints1d, Ragged
 
 from .output import TransformerModelOutput
 
 PoolingModelT = Model[Ragged, Floats2d]
+TransformerListenerModelT = Model[List[Doc], List[Floats2d]]
 
 WithRaggedLayersInT = Union[Iterable[Doc], Iterable[Iterable[Ragged]]]
 WithRaggedLayersOutT = List[List[Floats2d]]  # Doc -> Layer -> Representation
@@ -51,3 +53,11 @@ TransformerModelT = Model[TransformerInT, TransformerOutT]
 ScalarWeightInT = List[List[Ragged]]  # Doc -> Layer -> Representation
 ScalarWeightOutT = List[Ragged]  # Doc -> Weighted Representation
 ScalarWeightModelT = Model[ScalarWeightInT, ScalarWeightOutT]
+
+# Only used when replacing listeners.
+WrappedTransformerAndListenerInT = List[Doc]
+WrappedTransformerAndListenerOutT = List[Floats2d]
+WrappedTransformerAndListenerBackpropT = Callable[[List[List[Floats2d]]], Any]
+WrappedTransformerAndListenerModelT = Model[
+    WrappedTransformerAndListenerInT, WrappedTransformerAndListenerOutT
+]

@@ -1,47 +1,55 @@
-from typing import List, Optional, Tuple, Callable, Any, cast
+from functools import partial
+from pathlib import Path
+from typing import Any, Callable, List, Optional, Tuple, Union, cast
+
+import torch
 from curated_transformers.models.albert import AlbertConfig, AlbertEncoder
 from curated_transformers.models.bert import BertConfig, BertEncoder
 from curated_transformers.models.curated_transformer import (
-    CuratedTransformer,
     CuratedEncoderT,
+    CuratedTransformer,
 )
 from curated_transformers.models.hf_util import convert_pretrained_model_for_encoder
 from curated_transformers.models.output import PyTorchTransformerOutput
 from curated_transformers.models.roberta import RobertaConfig, RobertaEncoder
-from pathlib import Path
-from functools import partial
 from spacy.tokens import Doc
 from spacy.util import SimpleFrozenDict
+
 from thinc.api import (
     Model,
     PyTorchWrapper_v2,
-    xp2torch,
-    torch2xp,
-    get_torch_default_device,
     TorchScriptWrapper_v1,
+    get_torch_default_device,
+    torch2xp,
+    xp2torch,
 )
 from thinc.layers import chain
 from thinc.model import Model
 from thinc.shims.pytorch_grad_scaler import PyTorchGradScaler
 from thinc.types import ArgsKwargs, Floats2d, Ints1d
-import torch
 
-
+from ..errors import Errors
+from ..tokenization.types import Tok2PiecesModelT
+from .listeners import (
+    WrappedTransformerAndListener,
+    replace_listener_callback,
+    replace_listener_cfg_callback,
+)
 from .output import TransformerModelOutput
 from .remove_eos_bos import remove_bos_eos
-from .with_non_ws_tokens import with_non_ws_tokens
-from ..tokenization.types import Tok2PiecesModelT
 from .types import (
+    SpanExtractorModelT,
     TorchTransformerInT,
     TorchTransformerModelT,
     TorchTransformerOutT,
     TransformerBackpropT,
     TransformerInT,
-    TransformerOutT,
+    TransformerListenerModelT,
     TransformerModelT,
-    SpanExtractorModelT,
+    TransformerOutT,
+    WrappedTransformerAndListenerModelT,
 )
-from ..errors import Errors
+from .with_non_ws_tokens import with_non_ws_tokens
 
 
 def build_albert_transformer_model_v1(
@@ -69,7 +77,8 @@ def build_albert_transformer_model_v1(
     torchscript: bool = False,
     mixed_precision: bool = False,
     grad_scaler_config: dict = SimpleFrozenDict(),
-) -> TransformerModelT:
+    wrapped_listener: Optional[TransformerListenerModelT] = None,
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
     """Construct an ALBERT transformer model.
 
     vocab_size (int):
@@ -114,6 +123,9 @@ def build_albert_transformer_model_v1(
         Use mixed-precision training.
     grad_scaler_config (dict):
         Configuration passed to the PyTorch gradient scaler.
+    wrapped_listener (Optional[TransformerListenerModelT]):
+        Optional listener to wrap. Only used when replacing listeners
+        in downstream components.
     """
     config = AlbertConfig(
         embedding_width=embedding_width,
@@ -146,10 +158,11 @@ def build_albert_transformer_model_v1(
             grad_scaler_config=grad_scaler_config,
         )
 
-    return build_transformer_model_v1(
+    return build_transformer_or_listener_wrapper_v1(
         with_spans=with_spans,
         piece_encoder=piece_encoder,
         transformer=transformer,
+        wrapped_listener=wrapped_listener,
     )
 
 
@@ -176,7 +189,8 @@ def build_bert_transformer_model_v1(
     torchscript: bool = False,
     mixed_precision: bool = False,
     grad_scaler_config: dict = SimpleFrozenDict(),
-) -> TransformerModelT:
+    wrapped_listener: Optional[TransformerListenerModelT] = None,
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
     """Construct a BERT transformer model.
 
     vocab_size (int):
@@ -217,6 +231,9 @@ def build_bert_transformer_model_v1(
         Use mixed-precision training.
     grad_scaler_config (dict):
         Configuration passed to the PyTorch gradient scaler.
+    wrapped_listener (Optional[TransformerListenerModelT]):
+        Optional listener to wrap. Only used when replacing listeners
+        in downstream components.
     """
     config = BertConfig(
         hidden_width=hidden_width,
@@ -247,10 +264,11 @@ def build_bert_transformer_model_v1(
             grad_scaler_config=grad_scaler_config,
         )
 
-    return build_transformer_model_v1(
+    return build_transformer_or_listener_wrapper_v1(
         with_spans=with_spans,
         piece_encoder=piece_encoder,
         transformer=transformer,
+        wrapped_listener=wrapped_listener,
     )
 
 
@@ -277,7 +295,8 @@ def build_camembert_transformer_model_v1(
     mixed_precision: bool = False,
     torchscript=False,
     grad_scaler_config: dict = SimpleFrozenDict(),
-) -> TransformerModelT:
+    wrapped_listener: Optional[TransformerListenerModelT] = None,
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
     """Construct a CamemBERT transformer model.
 
     vocab_size (int):
@@ -318,6 +337,9 @@ def build_camembert_transformer_model_v1(
         Use mixed-precision training.
     grad_scaler_config (dict):
         Configuration passed to the PyTorch gradient scaler.
+    wrapped_listener (Optional[TransformerListenerModelT]):
+        Optional listener to wrap. Only used when replacing listeners
+        in downstream components.
     """
     config = RobertaConfig(
         hidden_width=hidden_width,
@@ -348,10 +370,11 @@ def build_camembert_transformer_model_v1(
             grad_scaler_config=grad_scaler_config,
         )
 
-    return build_transformer_model_v1(
+    return build_transformer_or_listener_wrapper_v1(
         with_spans=with_spans,
         piece_encoder=piece_encoder,
         transformer=transformer,
+        wrapped_listener=wrapped_listener,
     )
 
 
@@ -378,7 +401,8 @@ def build_roberta_transformer_model_v1(
     torchscript: bool = False,
     mixed_precision: bool = False,
     grad_scaler_config: dict = SimpleFrozenDict(),
-) -> TransformerModelT:
+    wrapped_listener: Optional[TransformerListenerModelT] = None,
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
     """Construct a RoBERTa transformer model.
 
     vocab_size (int):
@@ -419,6 +443,9 @@ def build_roberta_transformer_model_v1(
         Use mixed-precision training.
     grad_scaler_config (dict):
         Configuration passed to the PyTorch gradient scaler.
+    wrapped_listener (Optional[TransformerListenerModelT]):
+        Optional listener to wrap. Only used when replacing listeners
+        in downstream components.
     """
     config = RobertaConfig(
         hidden_width=hidden_width,
@@ -449,10 +476,11 @@ def build_roberta_transformer_model_v1(
             grad_scaler_config=grad_scaler_config,
         )
 
-    return build_transformer_model_v1(
+    return build_transformer_or_listener_wrapper_v1(
         with_spans=with_spans,
         piece_encoder=piece_encoder,
         transformer=transformer,
+        wrapped_listener=wrapped_listener,
     )
 
 
@@ -479,7 +507,8 @@ def build_xlmr_transformer_model_v1(
     torchscript: bool = False,
     mixed_precision: bool = False,
     grad_scaler_config: dict = SimpleFrozenDict(),
-) -> TransformerModelT:
+    wrapped_listener: Optional[TransformerListenerModelT] = None,
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
     """Construct a XLM-RoBERTa transformer model.
 
     vocab_size (int):
@@ -520,6 +549,9 @@ def build_xlmr_transformer_model_v1(
         Use mixed-precision training.
     grad_scaler_config (dict):
         Configuration passed to the PyTorch gradient scaler.
+    wrapped_listener (Optional[TransformerListenerModelT]):
+        Optional listener to wrap. Only used when replacing listeners
+        in downstream components.
     """
     config = RobertaConfig(
         hidden_width=hidden_width,
@@ -550,11 +582,31 @@ def build_xlmr_transformer_model_v1(
             grad_scaler_config=grad_scaler_config,
         )
 
-    return build_transformer_model_v1(
+    return build_transformer_or_listener_wrapper_v1(
         with_spans=with_spans,
         piece_encoder=piece_encoder,
         transformer=transformer,
+        wrapped_listener=wrapped_listener,
     )
+
+
+def build_transformer_or_listener_wrapper_v1(
+    *,
+    with_spans: Callable[
+        [TorchTransformerModelT],
+        SpanExtractorModelT,
+    ],
+    transformer: TorchTransformerModelT,
+    piece_encoder: Tok2PiecesModelT,
+    wrapped_listener: Optional[TransformerListenerModelT],
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
+    thinc_transformer = build_transformer_model_v1(
+        with_spans=with_spans, transformer=transformer, piece_encoder=piece_encoder
+    )
+    if wrapped_listener is not None:
+        return WrappedTransformerAndListener(thinc_transformer, wrapped_listener)
+    else:
+        return thinc_transformer
 
 
 def build_transformer_model_v1(
@@ -584,8 +636,8 @@ def build_transformer_model_v1(
         layers=layers,
         refs=refs,  # type: ignore
         attrs={
-            "replace_listener": _replace_listener,
-            "replace_listener_cfg": _replace_listener_cfg,
+            "replace_listener": replace_listener_callback,
+            "replace_listener_cfg": replace_listener_cfg_callback,
         },
         dims={"nO": transformer.get_dim("nO")},
     )
@@ -727,14 +779,6 @@ def _convert_outputs(
         )
 
     return output, convert_for_torch_backward
-
-
-def _replace_listener(trf_model):
-    raise ValueError(Errors.E010)
-
-
-def _replace_listener_cfg(trf_model_cfg, listener_model_cfg):
-    raise ValueError(Errors.E010)
 
 
 def build_pytorch_checkpoint_loader_v1(

@@ -12,16 +12,18 @@ from typing import (
 )
 
 from spacy import Errors, Language, Vocab
-from spacy.tokens import Doc
 from spacy.pipeline import TrainablePipe
+from spacy.tokens import Doc
 from spacy.training import Example, validate_examples, validate_get_examples
 from spacy.util import minibatch
+
 from thinc.api import Config, Optimizer, set_dropout_rate
 from thinc.model import Model
 from thinc.types import Ragged
 
-from ..models.output import DocTransformerOutput, TransformerModelOutput
 from ..models.listeners import TransformerListener
+from ..models.output import DocTransformerOutput, TransformerModelOutput
+from ..models.types import TransformerListenerModelT
 
 DEFAULT_CONFIG_STR = """
     [transformer]
@@ -117,7 +119,7 @@ class Transformer(TrainablePipe):
         self.vocab = vocab
         self.model = model
         self.name = name
-        self.listener_map: Dict[str, List[TransformerListener]] = {}
+        self.listener_map: Dict[str, List[TransformerListenerModelT]] = {}
         self.cfg: Dict[str, Any] = {}
 
         _install_extensions()
@@ -126,9 +128,9 @@ class Transformer(TrainablePipe):
         self._set_model_all_layer_outputs(all_layer_outputs)
 
     @property
-    def listeners(self) -> List[TransformerListener]:
+    def listeners(self) -> List[TransformerListenerModelT]:
         """
-        RETURNS (List[TransformerListener]):
+        RETURNS (List[TransformerListenerModelT]):
             The listener models listening to this component. Usually internals.
         """
         return [m for c in self.listening_components for m in self.listener_map[c]]
@@ -141,14 +143,18 @@ class Transformer(TrainablePipe):
         """
         return list(self.listener_map.keys())
 
-    def add_listener(self, listener: TransformerListener, component_name: str) -> None:
+    def add_listener(
+        self, listener: TransformerListenerModelT, component_name: str
+    ) -> None:
         """Add a listener for a downstream component. Usually internals."""
+        assert TransformerListener.is_listener(listener)
+
         self.listener_map.setdefault(component_name, [])
         if listener not in self.listener_map[component_name]:
             self.listener_map[component_name].append(listener)
 
     def remove_listener(
-        self, listener: TransformerListener, component_name: str
+        self, listener: TransformerListenerModelT, component_name: str
     ) -> bool:
         """Remove a listener for a downstream component. Usually internals.
 
@@ -166,7 +172,7 @@ class Transformer(TrainablePipe):
 
     def find_listeners(self, component: Any) -> None:
         """Walk over a model of a processing component, looking for layers that
-        are TransformerListener subclasses that have an upstream_name that matches
+        are transformer listeners that have an upstream_name that matches
         this component. Listeners can also set their upstream_name attribute to
         the wildcard string '*' to match any `Transformer`.
         You're unlikely to ever need multiple `Transformer` components, so it's
@@ -176,8 +182,8 @@ class Transformer(TrainablePipe):
         if isinstance(getattr(component, "model", None), Model):
             for node in component.model.walk():
                 if (
-                    isinstance(node, TransformerListener)
-                    and node.upstream_name in names
+                    TransformerListener.is_listener(node)
+                    and TransformerListener.get_upstream_name(node) in names
                 ):
                     self.add_listener(node, component.name)
 
@@ -298,11 +304,13 @@ class Transformer(TrainablePipe):
             docs, losses, sgd=sgd
         )
 
-        batch_id = TransformerListener.get_batch_id(docs)
+        batch_id = TransformerListener.calculate_batch_id(docs)
         for listener in self.listeners[:-1]:
-            listener.receive(batch_id, outputs, accum_func)
+            TransformerListener.receive(listener, batch_id, outputs, accum_func)
         if self.listeners:
-            self.listeners[-1].receive(batch_id, outputs, backprop_func)
+            TransformerListener.receive(
+                self.listeners[-1], batch_id, outputs, backprop_func
+            )
         return losses
 
     def get_loss(self, examples: Iterable[Example], scores: Any) -> None:
