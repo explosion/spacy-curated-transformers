@@ -1,10 +1,12 @@
 import pytest
 from spacy import util
 from spacy.training import Example
-from thinc.api import Config, reduce_mean
-
-from spacy_curated_transformers.models.listeners import build_transformer_layers_listener_v1
 from spacy_curated_transformers._compat import has_hf_transformers
+from spacy_curated_transformers.models.listeners import (
+    build_transformer_layers_listener_v1,
+)
+
+from thinc.api import Config, reduce_mean
 
 cfg_string_transformer_layers_listener = """
     # TransformerLayersListener
@@ -48,7 +50,6 @@ def test_transformer_layers_listener():
     listener = build_transformer_layers_listener_v1(
         layers=2, width=60, pooling=reduce_mean()
     )
-    transformer.add_listener(listener, "test")
 
     docs = [
         nlp.make_doc("Let's test a transformer."),
@@ -57,6 +58,7 @@ def test_transformer_layers_listener():
     examples = [Example.from_dict(doc, {}) for doc in docs]
 
     nlp.initialize(lambda: examples)
+    transformer.add_listener(listener, "test")
 
     # Check prediction.
     transformer.pipe(docs)
