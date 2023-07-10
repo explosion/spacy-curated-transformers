@@ -694,7 +694,7 @@ def wrapped_transformer_and_listener_forward(
     ops = model.ops
 
     # Follows the same process as `Transformer.update()`.
-    if frozen:
+    if frozen or not is_train:
         outputs = transformer.predict(docs)
         bp_outputs = None
         d_outputs = None
