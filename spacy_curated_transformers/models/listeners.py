@@ -166,16 +166,9 @@ def deserialize_listener_non_persistent_state(
     return _ListenerNonPersistentState()
 
 
-class TransformerListener:
-    """A layer that gets fed its answers from an upstream Transformer component.
-
-    The TransformerListener layer is used as a sublayer within a component such
-    as a parser, NER or text categorizer. Usually you'll have multiple listeners
-    connecting to a single upstream Transformer component that's earlier in the
-    pipeline. These layers act as proxies, passing the predictions
-    from the Transformer component into downstream components and communicating
-    gradients back upstream.
-    """
+class ListenerStateUtils:
+    """This class provides helper functions to manage the internal state of
+    `Model`s that act as listeners of the `Transformer` pipe."""
 
     SENTINEL = "_TRANSFORMER_LISTENER"
     USE_DOC_ANNOTATIONS_FOR_PREDICTION = "_USE_DOC_ANNOTATIONS_FOR_PREDICTION"
@@ -193,7 +186,7 @@ class TransformerListener:
         upstream_name: str = "*",
         requires_all_layer_outputs: bool
     ):
-        """Initializes the listener model."""
+        """Initialize the listener model."""
         listener.attrs["_upstream_name"] = upstream_name
         listener.attrs[cls.SENTINEL] = True
         listener.attrs[cls.USE_DOC_ANNOTATIONS_FOR_PREDICTION] = True
@@ -343,7 +336,7 @@ class TransformerLayersListener:
             },
             refs={"pooling": pooling},
         )
-        TransformerListener.init_state(
+        ListenerStateUtils.init_state(
             model, upstream_name=upstream_name, requires_all_layer_outputs=True
         )
         return model
@@ -356,8 +349,8 @@ class TransformerLayersListener:
         grad_factor: float = model.attrs["grad_factor"]
         n_layers: int = model.attrs["layers"]
 
-        _outputs = TransformerListener.get_output(model)
-        _backprop = TransformerListener.get_backprop(model)
+        _outputs = ListenerStateUtils.get_output(model)
+        _backprop = ListenerStateUtils.get_backprop(model)
 
         if is_train:
             assert _outputs is not None
@@ -366,7 +359,7 @@ class TransformerLayersListener:
                     Errors.E012.format(listener_name="TransformerLayersListener")
                 )
 
-            TransformerListener.verify_inputs(model, docs)
+            ListenerStateUtils.verify_inputs(model, docs)
 
             Y, backprop_pooling = pooling(_outputs.all_outputs, is_train)
 
@@ -381,13 +374,13 @@ class TransformerLayersListener:
                 outputs_to_backprop = tuple(i for i in range(0, _outputs.num_outputs))
                 dX = _backprop(dX, outputs_to_backprop=outputs_to_backprop)
 
-                TransformerListener.clear_state(model)
+                ListenerStateUtils.clear_state(model)
                 return dX
 
             return Y, backprop
 
         else:
-            if TransformerListener.use_doc_annotations_for_prediction(model):
+            if ListenerStateUtils.use_doc_annotations_for_prediction(model):
                 width = model.get_dim("nO")
 
                 no_trf_data = [doc._.trf_data is None for doc in docs]
@@ -406,12 +399,12 @@ class TransformerLayersListener:
                 return pooling.predict(docs), lambda dY: []
             else:
                 assert _outputs is not None
-                TransformerListener.verify_inputs(model, docs)
+                ListenerStateUtils.verify_inputs(model, docs)
                 outputs: Tuple[List[List[Floats2d]], Callable[[Any], Any]] = (
                     pooling.predict(_outputs.all_outputs),
                     lambda dY: [],
                 )
-                TransformerListener.clear_state(model)
+                ListenerStateUtils.clear_state(model)
                 return outputs
 
 
@@ -455,7 +448,7 @@ class LastTransformerLayerListener:
             attrs={"grad_factor": grad_factor},
             refs={"pooling": pooling},
         )
-        TransformerListener.init_state(
+        ListenerStateUtils.init_state(
             model, upstream_name=upstream_name, requires_all_layer_outputs=False
         )
         return model
@@ -467,12 +460,12 @@ class LastTransformerLayerListener:
         pooling: WithRaggedLastLayerModelT = model.layers[0]
         grad_factor: float = model.attrs["grad_factor"]
 
-        _outputs = TransformerListener.get_output(model)
-        _backprop = TransformerListener.get_backprop(model)
+        _outputs = ListenerStateUtils.get_output(model)
+        _backprop = ListenerStateUtils.get_backprop(model)
 
         if is_train:
             assert _outputs is not None
-            TransformerListener.verify_inputs(model, docs)
+            ListenerStateUtils.verify_inputs(model, docs)
 
             Y, backprop_pooling = pooling(_outputs.last_hidden_layer_states, is_train)
 
@@ -482,13 +475,13 @@ class LastTransformerLayerListener:
                     for dx in dX_pooling:
                         dx.data *= grad_factor
                 dX = _backprop([[d] for d in dX_pooling], outputs_to_backprop=(-1,))
-                TransformerListener.clear_state(model)
+                ListenerStateUtils.clear_state(model)
 
                 return dX
 
             return Y, backprop
         else:
-            if TransformerListener.use_doc_annotations_for_prediction(model):
+            if ListenerStateUtils.use_doc_annotations_for_prediction(model):
                 width = model.get_dim("nO")
 
                 no_trf_data = [doc._.trf_data is None for doc in docs]
@@ -501,12 +494,12 @@ class LastTransformerLayerListener:
                 return pooling.predict(docs), lambda dY: []
             else:
                 assert _outputs is not None
-                TransformerListener.verify_inputs(model, docs)
+                ListenerStateUtils.verify_inputs(model, docs)
                 outputs: Tuple[List[Floats2d], Callable[[Any], Any]] = (
                     pooling.predict(_outputs.last_hidden_layer_states),
                     lambda dY: [],
                 )
-                TransformerListener.clear_state(model)
+                ListenerStateUtils.clear_state(model)
                 return outputs
 
 
@@ -555,7 +548,7 @@ class ScalarWeightingListener:
                 "grad_factor": grad_factor,
             },
         )
-        TransformerListener.init_state(
+        ListenerStateUtils.init_state(
             model, upstream_name=upstream_name, requires_all_layer_outputs=True
         )
         return model
@@ -568,8 +561,8 @@ class ScalarWeightingListener:
         pooling: WithRaggedLastLayerModelT = model.layers[1]
         grad_factor: float = model.attrs["grad_factor"]
 
-        _outputs = TransformerListener.get_output(model)
-        _backprop = TransformerListener.get_backprop(model)
+        _outputs = ListenerStateUtils.get_output(model)
+        _backprop = ListenerStateUtils.get_backprop(model)
 
         if is_train:
             assert _outputs is not None
@@ -577,7 +570,7 @@ class ScalarWeightingListener:
                 raise ValueError(
                     Errors.E012.format(listener_name="ScalarWeightingListener")
                 )
-            TransformerListener.verify_inputs(model, docs)
+            ListenerStateUtils.verify_inputs(model, docs)
 
             Y_weighting: ScalarWeightOutT = []
             weighting_inputs = _outputs.all_outputs
@@ -596,12 +589,12 @@ class ScalarWeightingListener:
                             dx.data *= grad_factor
 
                 dX = _backprop(dX_weighting, outputs_to_backprop=outputs_to_backprop)
-                TransformerListener.clear_state(model)
+                ListenerStateUtils.clear_state(model)
                 return dX
 
             return Y, backprop
         else:
-            if TransformerListener.use_doc_annotations_for_prediction(model):
+            if ListenerStateUtils.use_doc_annotations_for_prediction(model):
                 width = model.get_dim("nO")
 
                 no_trf_data = [doc._.trf_data is None for doc in docs]
@@ -624,13 +617,13 @@ class ScalarWeightingListener:
                 return Y, lambda dX: []
             else:
                 assert _outputs is not None
-                TransformerListener.verify_inputs(model, docs)
+                ListenerStateUtils.verify_inputs(model, docs)
                 Y_weighting = weighting.predict(_outputs.all_outputs)
                 outputs: Tuple[List[Floats2d], Callable[[Any], Any]] = (
                     pooling.predict(Y_weighting),
                     lambda dY: [],
                 )
-                TransformerListener.clear_state(model)
+                ListenerStateUtils.clear_state(model)
                 return outputs
 
 
@@ -666,22 +659,22 @@ class WrappedTransformerAndListener(WrappedTransformerAndListenerModelT):
         # Ensure that the transformer returns the required outputs.
         transformer.attrs[
             "_all_layer_outputs"
-        ] = TransformerListener.requires_all_layer_outputs(listener)
+        ] = ListenerStateUtils.requires_all_layer_outputs(listener)
 
         # Freeze the embedded transformer if the source pipe was frozen.
         transformer.attrs["_frozen"] = frozen
 
         # Remove the marker from the wrapped listener so that it doesn't
         # get registered to any upstream transformer pipes.
-        assert TransformerListener.SENTINEL in listener.attrs
-        del listener.attrs[TransformerListener.SENTINEL]
+        assert ListenerStateUtils.SENTINEL in listener.attrs
+        del listener.attrs[ListenerStateUtils.SENTINEL]
 
         # Ensure that the listener directly reads from the last batch of transformer
         # outputs stored on it during prediction. If we don't do this, the wrapped
         # listener will end up using the annotations of the last upstream transformer
         # pipe that set the  `trf_data` annotation on the Doc object.
-        assert TransformerListener.use_doc_annotations_for_prediction(listener)
-        TransformerListener.set_use_doc_annotations_for_prediction(listener, False)
+        assert ListenerStateUtils.use_doc_annotations_for_prediction(listener)
+        ListenerStateUtils.set_use_doc_annotations_for_prediction(listener, False)
 
     @property
     def frozen_transformer(self) -> bool:
@@ -742,9 +735,9 @@ def wrapped_transformer_and_listener_forward(
 
     # Set the output directly on the listener so that it can use them for both
     # training/backprop and prediction.
-    TransformerListener.receive(
+    ListenerStateUtils.receive(
         listener,
-        batch_id=TransformerListener.calculate_batch_id(docs),
+        batch_id=ListenerStateUtils.calculate_batch_id(docs),
         outputs=outputs,
         backprop=backprop,
     )
@@ -761,7 +754,7 @@ def replace_listener_callback(
     from ..pipeline.transformer import Transformer
 
     assert isinstance(trf_pipe, Transformer)
-    assert TransformerListener.is_listener(trf_listener)
+    assert ListenerStateUtils.is_listener(trf_listener)
 
     copied_trf_listener = trf_listener.copy()
     wrapper = WrappedTransformerAndListener(

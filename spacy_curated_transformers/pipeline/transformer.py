@@ -23,7 +23,7 @@ from thinc.model import Model
 from thinc.types import Ragged
 
 from ..errors import Errors
-from ..models.listeners import TransformerListener
+from ..models.listeners import ListenerStateUtils
 from ..models.output import DocTransformerOutput, TransformerModelOutput
 from ..models.types import TransformerListenerModelT
 
@@ -87,9 +87,9 @@ def make_transformer(
 
 class Transformer(TrainablePipe):
     """spaCy pipeline component that provides access to a pre-trained transformer
-    model from. Downstream components are connected to this pip using TransformerListener
-    layers. This works similarly to spaCy's Transformer component and TransformerListener
-    sublayer.
+    model from. Downstream components are connected to this pip using transformer
+    listener layers. This works similarly to spaCy's Transformer component and
+    TransformerListener sublayer.
 
     The activations from the transformer are saved in the doc._.trf_data extension
     attribute.
@@ -149,7 +149,7 @@ class Transformer(TrainablePipe):
         self, listener: TransformerListenerModelT, component_name: str
     ) -> None:
         """Add a listener for a downstream component. Usually internals."""
-        if not TransformerListener.is_listener(listener):
+        if not ListenerStateUtils.is_listener(listener):
             raise ValueError(Errors.E026.format(model_name=listener.name))
 
         self.listener_map.setdefault(component_name, [])
@@ -185,8 +185,8 @@ class Transformer(TrainablePipe):
         if isinstance(getattr(component, "model", None), Model):
             for node in component.model.walk():
                 if (
-                    TransformerListener.is_listener(node)
-                    and TransformerListener.get_upstream_name(node) in names
+                    ListenerStateUtils.is_listener(node)
+                    and ListenerStateUtils.get_upstream_name(node) in names
                 ):
                     self.add_listener(node, component.name)
 
@@ -275,7 +275,7 @@ class Transformer(TrainablePipe):
         during its own `update` method. Instead, it runs its transformer model
         and communicates the output and the backpropagation callback to any
         downstream components that have been connected to it via the
-        TransformerListener sublayer. If there are multiple listeners, the last
+        transformer listener sublayer. If there are multiple listeners, the last
         layer will actually backprop to the transformer and call the optimizer,
         while the others simply increment the gradients.
 
@@ -307,11 +307,11 @@ class Transformer(TrainablePipe):
             docs, losses, sgd=sgd
         )
 
-        batch_id = TransformerListener.calculate_batch_id(docs)
+        batch_id = ListenerStateUtils.calculate_batch_id(docs)
         for listener in self.listeners[:-1]:
-            TransformerListener.receive(listener, batch_id, outputs, accum_func)
+            ListenerStateUtils.receive(listener, batch_id, outputs, accum_func)
         if self.listeners:
-            TransformerListener.receive(
+            ListenerStateUtils.receive(
                 self.listeners[-1], batch_id, outputs, backprop_func
             )
         return losses

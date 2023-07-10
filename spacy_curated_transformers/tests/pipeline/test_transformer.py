@@ -22,7 +22,7 @@ from spacy_curated_transformers.models.hf_loader import (
     build_hf_transformer_encoder_loader_v1,
 )
 from spacy_curated_transformers.models.listeners import (
-    TransformerListener,
+    ListenerStateUtils,
     WrappedTransformerAndListener,
 )
 from spacy_curated_transformers.models.with_strided_spans import (
@@ -596,7 +596,7 @@ def test_replace_listeners(cfg_string, listener_name, listener_entrypoint):
 
     tagger_tok2vec = tagger.model.get_ref("tok2vec")
 
-    assert TransformerListener.is_listener(tagger_tok2vec)
+    assert ListenerStateUtils.is_listener(tagger_tok2vec)
     assert transformer.listener_map["tagger"][0] == tagger_tok2vec
     assert isinstance(transformer.model, Model)
     assert transformer.model.name == "transformer_model"
