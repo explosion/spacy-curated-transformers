@@ -11,16 +11,7 @@ class ErrorsWithCodes(type):
 
 # fmt: off
 
-class Warnings(metaclass=ErrorsWithCodes):
-    W001 = ("Skipping transfomer pipe with TorchScript model - Model "
-            "is likely already quantized")
-
-
 class Errors(metaclass=ErrorsWithCodes):
-    E001 = ("Attempting to quantize a transformer pipe with a "
-            "non-PyTorch model ('{model_name}'). Quantization "
-            "is only supported by PyTorch-specific curated "
-            "transformer models")
     E009 = ("At least one sequence in the transformer's input has a length "
             "of {seq_len}, which is larger than the model's maximum sequence "
             "length of {max_seq_len} tokens")
