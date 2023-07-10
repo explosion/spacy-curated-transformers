@@ -260,15 +260,17 @@ class TransformerListener:
         """Check that the batch of Doc objects matches the ones we have a
         prediction for.
         """
-        batch_id = cls.get_batch_id(listener)
+        expected_batch_id = cls.get_batch_id(listener)
         outputs = cls.get_output(listener)
 
-        if batch_id is None and outputs is None:
+        if expected_batch_id is None and outputs is None:
             raise ValueError(SpacyErrors.E954)
         else:
             batch_id = cls.calculate_batch_id(inputs)
-            if batch_id != batch_id:
-                raise ValueError(SpacyErrors.E953.format(id1=batch_id, id2=batch_id))
+            if expected_batch_id != batch_id:
+                raise ValueError(
+                    SpacyErrors.E953.format(id1=expected_batch_id, id2=batch_id)
+                )
             else:
                 return True
 
