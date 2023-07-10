@@ -179,17 +179,25 @@ class TransformerListener:
 
     SENTINEL = "_TRANSFORMER_LISTENER"
     USE_DOC_ANNOTATIONS_FOR_PREDICTION = "_USE_DOC_ANNOTATIONS_FOR_PREDICTION"
+    REQUIRES_ALL_LAYER_OUTPUTS = "_REQUIRES_ALL_LAYER_OUTPUTS"
 
     @classmethod
     def is_listener(cls, model: Model) -> bool:
         return cls.SENTINEL in model.attrs
 
     @classmethod
-    def init_state(cls, listener: TransformerListenerModelT, upstream_name: str = "*"):
+    def init_state(
+        cls,
+        listener: TransformerListenerModelT,
+        *,
+        upstream_name: str = "*",
+        requires_all_layer_outputs: bool
+    ):
         """Initializes the listener model."""
         listener.attrs["_upstream_name"] = upstream_name
         listener.attrs[cls.SENTINEL] = True
         listener.attrs[cls.USE_DOC_ANNOTATIONS_FOR_PREDICTION] = True
+        listener.attrs[cls.REQUIRES_ALL_LAYER_OUTPUTS] = requires_all_layer_outputs
         listener.attrs["_state"] = _ListenerNonPersistentState()
 
     @classmethod
@@ -206,6 +214,10 @@ class TransformerListener:
         cls, listener: TransformerListenerModelT, new_value: bool
     ):
         listener.attrs[cls.USE_DOC_ANNOTATIONS_FOR_PREDICTION] = new_value
+
+    @classmethod
+    def requires_all_layer_outputs(cls, model: Model) -> bool:
+        return model.attrs[cls.REQUIRES_ALL_LAYER_OUTPUTS]
 
     @classmethod
     def get_upstream_name(cls, listener: TransformerListenerModelT) -> str:
@@ -331,7 +343,9 @@ class TransformerLayersListener:
             },
             refs={"pooling": pooling},
         )
-        TransformerListener.init_state(model, upstream_name=upstream_name)
+        TransformerListener.init_state(
+            model, upstream_name=upstream_name, requires_all_layer_outputs=True
+        )
         return model
 
     @staticmethod
@@ -441,7 +455,9 @@ class LastTransformerLayerListener:
             attrs={"grad_factor": grad_factor},
             refs={"pooling": pooling},
         )
-        TransformerListener.init_state(model, upstream_name=upstream_name)
+        TransformerListener.init_state(
+            model, upstream_name=upstream_name, requires_all_layer_outputs=False
+        )
         return model
 
     @staticmethod
@@ -539,7 +555,9 @@ class ScalarWeightingListener:
                 "grad_factor": grad_factor,
             },
         )
-        TransformerListener.init_state(model, upstream_name=upstream_name)
+        TransformerListener.init_state(
+            model, upstream_name=upstream_name, requires_all_layer_outputs=True
+        )
         return model
 
     @staticmethod
@@ -646,10 +664,9 @@ class WrappedTransformerAndListener(WrappedTransformerAndListenerModelT):
         )
 
         # Ensure that the transformer returns the required outputs.
-        transformer.attrs["_all_layer_outputs"] = listener.name in (
-            ScalarWeightingListener.name,
-            TransformerLayersListener.name,
-        )
+        transformer.attrs[
+            "_all_layer_outputs"
+        ] = TransformerListener.requires_all_layer_outputs(listener)
 
         # Freeze the embedded transformer if the source pipe was frozen.
         transformer.attrs["_frozen"] = frozen
