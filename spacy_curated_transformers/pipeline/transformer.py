@@ -11,7 +11,8 @@ from typing import (
     Tuple,
 )
 
-from spacy import Errors, Language, Vocab
+from spacy import Errors as SpacyErrors
+from spacy import Language, Vocab
 from spacy.pipeline import TrainablePipe
 from spacy.tokens import Doc
 from spacy.training import Example, validate_examples, validate_get_examples
@@ -21,6 +22,7 @@ from thinc.api import Config, Optimizer, set_dropout_rate
 from thinc.model import Model
 from thinc.types import Ragged
 
+from ..errors import Errors
 from ..models.listeners import TransformerListener
 from ..models.output import DocTransformerOutput, TransformerModelOutput
 from ..models.types import TransformerListenerModelT
@@ -147,7 +149,8 @@ class Transformer(TrainablePipe):
         self, listener: TransformerListenerModelT, component_name: str
     ) -> None:
         """Add a listener for a downstream component. Usually internals."""
-        assert TransformerListener.is_listener(listener)
+        if not TransformerListener.is_listener(listener):
+            raise ValueError(Errors.E026.format(model_name=listener.name))
 
         self.listener_map.setdefault(component_name, [])
         if listener not in self.listener_map[component_name]:
@@ -348,7 +351,7 @@ class Transformer(TrainablePipe):
         doc_sample = []
         for example in islice(get_examples(), 10):
             doc_sample.append(example.x)
-        assert doc_sample, Errors.E923.format(name=self.name)
+        assert doc_sample, SpacyErrors.E923.format(name=self.name)
         self.model.initialize(X=doc_sample)
 
     def add_label(self, label: Any):

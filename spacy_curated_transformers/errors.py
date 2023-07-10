@@ -56,5 +56,7 @@ class Errors(metaclass=ErrorsWithCodes):
             "`CharEncoder` piece encoder")
     E025 = ("Attempting to perform gradual unfreezing of a non-transformer pipe "
             "('{pipe_name}'}. Only transformer pipes support this feature")
+    E026 = ("Attempting to register a model ('{model_name}') with the transformer pipe"
+            "that isn't a transformer listener")
 
 # fmt: on
