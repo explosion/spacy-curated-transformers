@@ -43,7 +43,7 @@ def build_transformer_layers_listener_v1(
         The width of the vectors produced by the upstream transformer component.
     pooling (PoolingModelT):
         Model that is used to perform pooling over the piece representations.
-    upstream_name (str):
+    upstream (str):
         A string to identify the 'upstream' Transformer component
         to communicate with. The upstream name should either be the wildcard
         string '*', or the name of the Transformer component.
@@ -56,14 +56,21 @@ def build_transformer_layers_listener_v1(
     grad_factor (float):
         Factor to multiply gradients with.
     """
-    listener = TransformerLayersListener.new(
-        upstream_name=upstream,
-        pooling=pooling,
-        layers=layers,
-        width=width,
-        grad_factor=grad_factor,
+    model: TransformerListenerModelT = Model(
+        name="transformer_layers_listener",
+        forward=transformer_layers_listener_forward,
+        dims={"nO": width},
+        layers=[with_ragged_layers(pooling)],
+        attrs={
+            "grad_factor": grad_factor,
+            "layers": layers + 1,
+        },
+        refs={"pooling": pooling},
     )
-    return listener
+    ListenerStateUtils.init_state(
+        model, upstream_name=upstream, requires_all_layer_outputs=True
+    )
+    return model
 
 
 def build_last_transformer_layer_listener_v1(
@@ -81,7 +88,7 @@ def build_last_transformer_layer_listener_v1(
         The width of the vectors produced by the upstream transformer component.
     pooling (Model):
         Model that is used to perform pooling over the piece representations.
-    upstream_name (str):
+    upstream (str):
         A string to identify the 'upstream' Transformer component
         to communicate with. The upstream name should either be the wildcard
         string '*', or the name of the Transformer component.
@@ -94,10 +101,18 @@ def build_last_transformer_layer_listener_v1(
     grad_factor (float):
         Factor to multiply gradients with.
     """
-    listener = LastTransformerLayerListener.new(
-        upstream_name=upstream, pooling=pooling, width=width, grad_factor=grad_factor
+    model: TransformerListenerModelT = Model(
+        name="last_transformer_layer_listener",
+        forward=last_transformer_layer_listener_forward,
+        dims={"nO": width},
+        layers=[with_ragged_last_layer(pooling)],
+        attrs={"grad_factor": grad_factor},
+        refs={"pooling": pooling},
     )
-    return listener
+    ListenerStateUtils.init_state(
+        model, upstream_name=upstream, requires_all_layer_outputs=False
+    )
+    return model
 
 
 def build_scalar_weighting_listener_v1(
@@ -121,7 +136,7 @@ def build_scalar_weighting_listener_v1(
         Model that is used to perform the weighting of the different layer outputs.
     pooling (Model):
         Model that is used to perform pooling over the piece representations.
-    upstream_name (str):
+    upstream (str):
         A string to identify the 'upstream' Transformer component
         to communicate with. The upstream name should either be the wildcard
         string '*', or the name of the Transformer component.
@@ -134,14 +149,19 @@ def build_scalar_weighting_listener_v1(
     grad_factor (float):
         Factor to multiply gradients with.
     """
-    listener = ScalarWeightingListener.new(
-        upstream_name=upstream,
-        weighting=weighting,
-        pooling=pooling,
-        width=width,
-        grad_factor=grad_factor,
+    model: TransformerListenerModelT = Model(
+        name="scalar_weighting_listener",
+        forward=scalar_weighting_listener_forward,
+        dims={"nO": width},
+        layers=[weighting, with_ragged_last_layer(pooling)],
+        attrs={
+            "grad_factor": grad_factor,
+        },
     )
-    return listener
+    ListenerStateUtils.init_state(
+        model, upstream_name=upstream, requires_all_layer_outputs=True
+    )
+    return model
 
 
 # We need to store the listener state in the attributes dict of the listener model.
@@ -289,342 +309,192 @@ class ListenerStateUtils:
         state.backprop = None
 
 
-class TransformerLayersListener:
-    name = "transformer_layers_listener"
+def transformer_layers_listener_forward(
+    model: TransformerListenerModelT, docs: Iterable[Doc], is_train: bool
+) -> Tuple[List[List[Floats2d]], Callable[[Any], Any]]:
+    pooling: WithRaggedLayersModelT = model.layers[0]
+    grad_factor: float = model.attrs["grad_factor"]
+    n_layers: int = model.attrs["layers"]
 
-    @classmethod
-    def new(
-        cls,
-        upstream_name: str,
-        pooling: PoolingModelT,
-        width: int,
-        layers: int,
-        grad_factor: float,
-    ) -> TransformerListenerModelT:
-        """Construct a transformer listener that passes through the pooled representations
-        of all transformer layers. Requires its upstream Transformer component to return all
-        layer outputs from its model.
+    _outputs = ListenerStateUtils.get_output(model)
+    _backprop = ListenerStateUtils.get_backprop(model)
 
-        upstream_name (str):
-            A string to identify the 'upstream' Transformer component
-            to communicate with. The upstream name should either be the wildcard
-            string '*', or the name of the Transformer component.
+    if is_train:
+        assert _outputs is not None
+        if _outputs.last_layer_only:
+            raise ValueError(
+                Errors.E012.format(listener_name="TransformerLayersListener")
+            )
 
-            In almost all cases, the wildcard string will suffice as there'll only be one
-            upstream Transformer component. But in certain situations, e.g: you have disjoint
-            datasets for certain tasks, or you'd like to use a pre-trained pipeline but a
-            downstream task requires its own token representations, you could end up with
-            more than one Transformer component in the pipeline.
-        pooling (PoolingModelT):
-            Model that is used to perform pooling over the piece representations.
-        width (int):
-            The width of the vectors produced by the upstream transformer component.
-        layers (int):
-            The the number of layers produced by the upstream transformer component,
-            excluding the embedding layer.
-        grad_factor (float):
-            Factor to multiply gradients with.
-        """
-        model: TransformerListenerModelT = Model(
-            name=cls.name,
-            forward=cls.forward,
-            dims={"nO": width},
-            layers=[with_ragged_layers(pooling)],
-            attrs={
-                "grad_factor": grad_factor,
-                "layers": layers + 1,
-            },
-            refs={"pooling": pooling},
-        )
-        ListenerStateUtils.init_state(
-            model, upstream_name=upstream_name, requires_all_layer_outputs=True
-        )
-        return model
+        ListenerStateUtils.verify_inputs(model, docs)
 
-    @staticmethod
-    def forward(
-        model: TransformerListenerModelT, docs: Iterable[Doc], is_train: bool
-    ) -> Tuple[List[List[Floats2d]], Callable[[Any], Any]]:
-        pooling: WithRaggedLayersModelT = model.layers[0]
-        grad_factor: float = model.attrs["grad_factor"]
-        n_layers: int = model.attrs["layers"]
+        Y, backprop_pooling = pooling(_outputs.all_outputs, is_train)
 
-        _outputs = ListenerStateUtils.get_output(model)
-        _backprop = ListenerStateUtils.get_backprop(model)
+        def backprop(dY):
+            dX = backprop_pooling(dY)
 
-        if is_train:
-            assert _outputs is not None
-            if _outputs.last_layer_only:
+            if grad_factor != 1.0:
+                for dX_doc in dX:
+                    for dX_layer in dX_doc:
+                        dX_layer.data *= grad_factor
+
+            outputs_to_backprop = tuple(i for i in range(0, _outputs.num_outputs))
+            dX = _backprop(dX, outputs_to_backprop=outputs_to_backprop)
+
+            ListenerStateUtils.clear_state(model)
+            return dX
+
+        return Y, backprop
+
+    else:
+        if ListenerStateUtils.use_doc_annotations_for_prediction(model):
+            width = model.get_dim("nO")
+
+            no_trf_data = [doc._.trf_data is None for doc in docs]
+            if any(no_trf_data):
+                assert all(no_trf_data)
+                return [
+                    [model.ops.alloc2f(len(doc), width) for _ in range(n_layers)]
+                    for doc in docs
+                ], lambda dY: []
+
+            if any(doc._.trf_data.last_layer_only for doc in docs):
                 raise ValueError(
                     Errors.E012.format(listener_name="TransformerLayersListener")
                 )
 
-            ListenerStateUtils.verify_inputs(model, docs)
-
-            Y, backprop_pooling = pooling(_outputs.all_outputs, is_train)
-
-            def backprop(dY):
-                dX = backprop_pooling(dY)
-
-                if grad_factor != 1.0:
-                    for dX_doc in dX:
-                        for dX_layer in dX_doc:
-                            dX_layer.data *= grad_factor
-
-                outputs_to_backprop = tuple(i for i in range(0, _outputs.num_outputs))
-                dX = _backprop(dX, outputs_to_backprop=outputs_to_backprop)
-
-                ListenerStateUtils.clear_state(model)
-                return dX
-
-            return Y, backprop
-
+            return pooling.predict(docs), lambda dY: []
         else:
-            if ListenerStateUtils.use_doc_annotations_for_prediction(model):
-                width = model.get_dim("nO")
-
-                no_trf_data = [doc._.trf_data is None for doc in docs]
-                if any(no_trf_data):
-                    assert all(no_trf_data)
-                    return [
-                        [model.ops.alloc2f(len(doc), width) for _ in range(n_layers)]
-                        for doc in docs
-                    ], lambda dY: []
-
-                if any(doc._.trf_data.last_layer_only for doc in docs):
-                    raise ValueError(
-                        Errors.E012.format(listener_name="TransformerLayersListener")
-                    )
-
-                return pooling.predict(docs), lambda dY: []
-            else:
-                assert _outputs is not None
-                ListenerStateUtils.verify_inputs(model, docs)
-                outputs: Tuple[List[List[Floats2d]], Callable[[Any], Any]] = (
-                    pooling.predict(_outputs.all_outputs),
-                    lambda dY: [],
-                )
-                ListenerStateUtils.clear_state(model)
-                return outputs
-
-
-class LastTransformerLayerListener:
-    name = "last_transformer_layer_listener"
-
-    @classmethod
-    def new(
-        cls,
-        upstream_name: str,
-        pooling: PoolingModelT,
-        width: int,
-        grad_factor: float,
-    ) -> TransformerListenerModelT:
-        """Construct a transformer listener that extracts the output of the last transformer
-        layer and performs pooling over the individual pieces of each Doc token, returning their
-        corresponding representations.
-
-        upstream_name (str):
-            A string to identify the 'upstream' Transformer component
-            to communicate with. The upstream name should either be the wildcard
-            string '*', or the name of the Transformer component.
-
-            In almost all cases, the wildcard string will suffice as there'll only be one
-            upstream Transformer component. But in certain situations, e.g: you have disjoint
-            datasets for certain tasks, or you'd like to use a pre-trained pipeline but a
-            downstream task requires its own token representations, you could end up with
-            more than one Transformer component in the pipeline.
-        width (int):
-            The width of the vectors produced by the upstream transformer component.
-        pooling (Model):
-            Model that is used to perform pooling over the piece representations.
-        grad_factor (float):
-            Factor to multiply gradients with.
-        """
-        model: TransformerListenerModelT = Model(
-            name=cls.name,
-            forward=cls.forward,
-            dims={"nO": width},
-            layers=[with_ragged_last_layer(pooling)],
-            attrs={"grad_factor": grad_factor},
-            refs={"pooling": pooling},
-        )
-        ListenerStateUtils.init_state(
-            model, upstream_name=upstream_name, requires_all_layer_outputs=False
-        )
-        return model
-
-    @staticmethod
-    def forward(
-        model: TransformerListenerModelT, docs: Iterable[Doc], is_train: bool
-    ) -> Tuple[List[Floats2d], Callable[[Any], Any]]:
-        pooling: WithRaggedLastLayerModelT = model.layers[0]
-        grad_factor: float = model.attrs["grad_factor"]
-
-        _outputs = ListenerStateUtils.get_output(model)
-        _backprop = ListenerStateUtils.get_backprop(model)
-
-        if is_train:
             assert _outputs is not None
             ListenerStateUtils.verify_inputs(model, docs)
+            outputs: Tuple[List[List[Floats2d]], Callable[[Any], Any]] = (
+                pooling.predict(_outputs.all_outputs),
+                lambda dY: [],
+            )
+            ListenerStateUtils.clear_state(model)
+            return outputs
 
-            Y, backprop_pooling = pooling(_outputs.last_hidden_layer_states, is_train)
 
-            def backprop(dY):
-                dX_pooling = backprop_pooling(dY)
-                if grad_factor != 1.0:
-                    for dx in dX_pooling:
+def last_transformer_layer_listener_forward(
+    model: TransformerListenerModelT, docs: Iterable[Doc], is_train: bool
+) -> Tuple[List[Floats2d], Callable[[Any], Any]]:
+    pooling: WithRaggedLastLayerModelT = model.layers[0]
+    grad_factor: float = model.attrs["grad_factor"]
+
+    _outputs = ListenerStateUtils.get_output(model)
+    _backprop = ListenerStateUtils.get_backprop(model)
+
+    if is_train:
+        assert _outputs is not None
+        ListenerStateUtils.verify_inputs(model, docs)
+
+        Y, backprop_pooling = pooling(_outputs.last_hidden_layer_states, is_train)
+
+        def backprop(dY):
+            dX_pooling = backprop_pooling(dY)
+            if grad_factor != 1.0:
+                for dx in dX_pooling:
+                    dx.data *= grad_factor
+            dX = _backprop([[d] for d in dX_pooling], outputs_to_backprop=(-1,))
+            ListenerStateUtils.clear_state(model)
+
+            return dX
+
+        return Y, backprop
+    else:
+        if ListenerStateUtils.use_doc_annotations_for_prediction(model):
+            width = model.get_dim("nO")
+
+            no_trf_data = [doc._.trf_data is None for doc in docs]
+            if any(no_trf_data):
+                assert all(no_trf_data)
+                return [
+                    model.ops.alloc2f(len(doc), width) for doc in docs
+                ], lambda dY: []
+
+            return pooling.predict(docs), lambda dY: []
+        else:
+            assert _outputs is not None
+            ListenerStateUtils.verify_inputs(model, docs)
+            outputs: Tuple[List[Floats2d], Callable[[Any], Any]] = (
+                pooling.predict(_outputs.last_hidden_layer_states),
+                lambda dY: [],
+            )
+            ListenerStateUtils.clear_state(model)
+            return outputs
+
+
+def scalar_weighting_listener_forward(
+    model: TransformerListenerModelT, docs: Iterable[Doc], is_train: bool
+) -> Tuple[List[Floats2d], Callable[[Any], Any]]:
+    weighting: ScalarWeightModelT = model.layers[0]
+    pooling: WithRaggedLastLayerModelT = model.layers[1]
+    grad_factor: float = model.attrs["grad_factor"]
+
+    _outputs = ListenerStateUtils.get_output(model)
+    _backprop = ListenerStateUtils.get_backprop(model)
+
+    if is_train:
+        assert _outputs is not None
+        if _outputs.last_layer_only:
+            raise ValueError(
+                Errors.E012.format(listener_name="ScalarWeightingListener")
+            )
+        ListenerStateUtils.verify_inputs(model, docs)
+
+        Y_weighting: ScalarWeightOutT = []
+        weighting_inputs = _outputs.all_outputs
+        outputs_to_backprop = tuple(i for i in range(_outputs.num_outputs))
+
+        Y_weighting, backprop_weighting = weighting(weighting_inputs, is_train)
+        Y, backprop_pooling = pooling(Y_weighting, is_train)
+
+        def backprop(dYs):
+            dX_pooling = backprop_pooling(dYs)
+            dX_weighting = backprop_weighting(dX_pooling)
+
+            if grad_factor != 1.0:
+                for dx_inner in dX_weighting:
+                    for dx in dx_inner:
                         dx.data *= grad_factor
-                dX = _backprop([[d] for d in dX_pooling], outputs_to_backprop=(-1,))
-                ListenerStateUtils.clear_state(model)
 
-                return dX
+            dX = _backprop(dX_weighting, outputs_to_backprop=outputs_to_backprop)
+            ListenerStateUtils.clear_state(model)
+            return dX
 
-            return Y, backprop
-        else:
-            if ListenerStateUtils.use_doc_annotations_for_prediction(model):
-                width = model.get_dim("nO")
+        return Y, backprop
+    else:
+        if ListenerStateUtils.use_doc_annotations_for_prediction(model):
+            width = model.get_dim("nO")
 
-                no_trf_data = [doc._.trf_data is None for doc in docs]
-                if any(no_trf_data):
-                    assert all(no_trf_data)
-                    return [
-                        model.ops.alloc2f(len(doc), width) for doc in docs
-                    ], lambda dY: []
+            no_trf_data = [doc._.trf_data is None for doc in docs]
+            if any(no_trf_data):
+                assert all(no_trf_data)
+                return [
+                    model.ops.alloc2f(len(doc), width) for doc in docs
+                ], lambda dY: []
 
-                return pooling.predict(docs), lambda dY: []
-            else:
-                assert _outputs is not None
-                ListenerStateUtils.verify_inputs(model, docs)
-                outputs: Tuple[List[Floats2d], Callable[[Any], Any]] = (
-                    pooling.predict(_outputs.last_hidden_layer_states),
-                    lambda dY: [],
-                )
-                ListenerStateUtils.clear_state(model)
-                return outputs
-
-
-class ScalarWeightingListener:
-    name = "scalar_weighting_listener"
-
-    @classmethod
-    def new(
-        cls,
-        upstream_name: str,
-        weighting: ScalarWeightModelT,
-        pooling: PoolingModelT,
-        width: int,
-        grad_factor: float,
-    ) -> TransformerListenerModelT:
-        """Construct a transformer listener that calculates a weighted representation
-        of all transformer layer outputs and performs pooling over the individual pieces
-        of each Doc token, returning their corresponding representations. Requires its
-        upstream Transformer component to return all layer outputs from its model.
-
-        upstream_name (str):
-            A string to identify the 'upstream' Transformer component
-            to communicate with. The upstream name should either be the wildcard
-            string '*', or the name of the Transformer component.
-
-            In almost all cases, the wildcard string will suffice as there'll only be one
-            upstream Transformer component. But in certain situations, e.g: you have disjoint
-            datasets for certain tasks, or you'd like to use a pre-trained pipeline but a
-            downstream task requires its own token representations, you could end up with
-            more than one Transformer component in the pipeline.
-        weighting (Model):
-            Model that is used to perform the weighting of the different layer outputs.
-        pooling (Model):
-            Model that is used to perform pooling over the piece representations.
-        width (int):
-            The width of the vectors produced by the upstream transformer component.
-        grad_factor (float):
-            Factor to multiply gradients with.
-        """
-        model: TransformerListenerModelT = Model(
-            name=cls.name,
-            forward=cls.forward,
-            dims={"nO": width},
-            layers=[weighting, with_ragged_last_layer(pooling)],
-            attrs={
-                "grad_factor": grad_factor,
-            },
-        )
-        ListenerStateUtils.init_state(
-            model, upstream_name=upstream_name, requires_all_layer_outputs=True
-        )
-        return model
-
-    @staticmethod
-    def forward(
-        model: TransformerListenerModelT, docs: Iterable[Doc], is_train: bool
-    ) -> Tuple[List[Floats2d], Callable[[Any], Any]]:
-        weighting: ScalarWeightModelT = model.layers[0]
-        pooling: WithRaggedLastLayerModelT = model.layers[1]
-        grad_factor: float = model.attrs["grad_factor"]
-
-        _outputs = ListenerStateUtils.get_output(model)
-        _backprop = ListenerStateUtils.get_backprop(model)
-
-        if is_train:
-            assert _outputs is not None
-            if _outputs.last_layer_only:
+            if any(doc._.trf_data.last_layer_only for doc in docs):
                 raise ValueError(
                     Errors.E012.format(listener_name="ScalarWeightingListener")
                 )
-            ListenerStateUtils.verify_inputs(model, docs)
 
-            Y_weighting: ScalarWeightOutT = []
-            weighting_inputs = _outputs.all_outputs
-            outputs_to_backprop = tuple(i for i in range(_outputs.num_outputs))
+            Y_weighting = weighting.predict(
+                [doc._.trf_data.all_outputs for doc in docs]
+            )
+            Y = pooling.predict(Y_weighting)
 
-            Y_weighting, backprop_weighting = weighting(weighting_inputs, is_train)
-            Y, backprop_pooling = pooling(Y_weighting, is_train)
-
-            def backprop(dYs):
-                dX_pooling = backprop_pooling(dYs)
-                dX_weighting = backprop_weighting(dX_pooling)
-
-                if grad_factor != 1.0:
-                    for dx_inner in dX_weighting:
-                        for dx in dx_inner:
-                            dx.data *= grad_factor
-
-                dX = _backprop(dX_weighting, outputs_to_backprop=outputs_to_backprop)
-                ListenerStateUtils.clear_state(model)
-                return dX
-
-            return Y, backprop
+            return Y, lambda dX: []
         else:
-            if ListenerStateUtils.use_doc_annotations_for_prediction(model):
-                width = model.get_dim("nO")
-
-                no_trf_data = [doc._.trf_data is None for doc in docs]
-                if any(no_trf_data):
-                    assert all(no_trf_data)
-                    return [
-                        model.ops.alloc2f(len(doc), width) for doc in docs
-                    ], lambda dY: []
-
-                if any(doc._.trf_data.last_layer_only for doc in docs):
-                    raise ValueError(
-                        Errors.E012.format(listener_name="ScalarWeightingListener")
-                    )
-
-                Y_weighting = weighting.predict(
-                    [doc._.trf_data.all_outputs for doc in docs]
-                )
-                Y = pooling.predict(Y_weighting)
-
-                return Y, lambda dX: []
-            else:
-                assert _outputs is not None
-                ListenerStateUtils.verify_inputs(model, docs)
-                Y_weighting = weighting.predict(_outputs.all_outputs)
-                outputs: Tuple[List[Floats2d], Callable[[Any], Any]] = (
-                    pooling.predict(Y_weighting),
-                    lambda dY: [],
-                )
-                ListenerStateUtils.clear_state(model)
-                return outputs
+            assert _outputs is not None
+            ListenerStateUtils.verify_inputs(model, docs)
+            Y_weighting = weighting.predict(_outputs.all_outputs)
+            outputs: Tuple[List[Floats2d], Callable[[Any], Any]] = (
+                pooling.predict(Y_weighting),
+                lambda dY: [],
+            )
+            ListenerStateUtils.clear_state(model)
+            return outputs
 
 
 class WrappedTransformerAndListener(WrappedTransformerAndListenerModelT):
