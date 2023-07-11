@@ -1,27 +1,34 @@
-from typing import Dict, Any
 from functools import partial
+from typing import Any, Dict
+
+import numpy
 import pytest
 import spacy
+import torch
 from spacy import Config, util
+from spacy.language import Language
 from spacy.training import Example
 from spacy.training.initialize import init_nlp
 from spacy.training.loop import train
-from spacy.language import Language
 from spacy.util import registry as spacy_registry
-import torch
-
+from spacy_curated_transformers._compat import has_hf_transformers, transformers
 from spacy_curated_transformers.models.architectures import (
-    build_camembert_transformer_model_v1,
-    build_xlmr_transformer_model_v1,
     build_bert_transformer_model_v1,
+    build_camembert_transformer_model_v1,
     build_roberta_transformer_model_v1,
+    build_xlmr_transformer_model_v1,
 )
 from spacy_curated_transformers.models.hf_loader import (
     build_hf_transformer_encoder_loader_v1,
 )
+from spacy_curated_transformers.models.listeners import (
+    ListenerStateUtils,
+    WrappedTransformerAndListener,
+)
 from spacy_curated_transformers.models.with_strided_spans import (
     build_with_strided_spans_v1,
 )
+from spacy_curated_transformers.pipeline.transformer import make_transformer
 from spacy_curated_transformers.tokenization import (
     build_bert_wordpiece_encoder_v1,
     build_byte_bpe_encoder_v1,
@@ -29,15 +36,14 @@ from spacy_curated_transformers.tokenization import (
     build_hf_piece_encoder_loader_v1,
     build_xlmr_sentencepiece_encoder_v1,
 )
-from spacy_curated_transformers.pipeline.transformer import make_transformer
 from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
     build_sentencepiece_encoder_loader_v1,
 )
 from spacy_curated_transformers.util import create_gradual_transformer_unfreezing
-from spacy_curated_transformers._compat import has_hf_transformers, transformers
 
-from ..util import torch_assertclose
+from thinc.model import Model
 
+from ..util import make_tempdir, torch_assertclose
 
 cfg_string_last_layer_listener = """
     # LastTransformerLayerListener
@@ -559,3 +565,119 @@ def test_gradual_transformer_unfreezing(test_dir):
 
     with pytest.raises(ValueError):
         create_gradual_transformer_unfreezing({"transformer": 5, "*": 4})
+
+
+@pytest.mark.skipif(not has_hf_transformers, reason="requires huggingface transformers")
+@pytest.mark.parametrize(
+    ["cfg_string", "listener_name", "listener_entrypoint"],
+    [
+        (
+            cfg_string_last_layer_listener,
+            "last_transformer_layer_listener",
+            "spacy-curated-transformers.LastTransformerLayerListener.v1",
+        ),
+        (
+            cfg_string_scalar_weighting_layer_listener,
+            "scalar_weighting_listener",
+            "spacy-curated-transformers.ScalarWeightingListener.v1",
+        ),
+    ],
+)
+def test_replace_listeners(cfg_string, listener_name, listener_entrypoint):
+    orig_config = Config().from_str(cfg_string)
+    nlp = util.load_model_from_config(orig_config, auto_fill=True, validate=True)
+    text = "This is awesome"
+    examples = [Example.from_dict(nlp.make_doc(text), {"tags": ["A", "B", "C"]})]
+    optimizer = nlp.initialize(lambda: examples)
+
+    # verify correct configuration with transformer listener
+    transformer = nlp.get_pipe("transformer")
+    tagger = nlp.get_pipe("tagger")
+
+    tagger_tok2vec = tagger.model.get_ref("tok2vec")
+
+    assert ListenerStateUtils.is_listener(tagger_tok2vec)
+    assert transformer.listener_map["tagger"][0] == tagger_tok2vec
+    assert isinstance(transformer.model, Model)
+    assert transformer.model.name == "transformer_model"
+    assert (
+        nlp.config["components"]["transformer"]["model"]["@architectures"]
+        == "spacy-curated-transformers.BertTransformer.v1"
+    )
+    assert (
+        nlp.config["components"]["tagger"]["model"]["tok2vec"]["@architectures"]
+        == listener_entrypoint
+    )
+
+    # train pipe before replacing listeners
+    for i in range(5):
+        losses = {}
+        nlp.update(examples, sgd=optimizer, losses=losses)
+        doc = nlp(text)
+
+    preds = [t.tag_ for t in doc]
+    doc_tensor = tagger_tok2vec.predict([doc])
+
+    # replace listener and verify predictions are still the same
+    transformer.frozen = True
+    nlp.replace_listeners("transformer", "tagger", ["model.tok2vec"])
+    tagger = nlp.get_pipe("tagger")
+    tagger_tok2vec = tagger.model.get_ref("tok2vec")
+    assert isinstance(tagger_tok2vec, WrappedTransformerAndListener)
+    assert tagger_tok2vec.frozen_transformer
+    assert tagger_tok2vec.layers[0].name == "transformer_model"
+    assert tagger_tok2vec.layers[1].name == listener_name
+    assert (
+        nlp.config["components"]["tagger"]["model"]["tok2vec"]["@architectures"]
+        == "spacy-curated-transformers.BertTransformer.v1"
+    )
+    assert (
+        nlp.config["components"]["tagger"]["model"]["tok2vec"]["wrapped_listener"][
+            "@architectures"
+        ]
+        == listener_entrypoint
+    )
+    doc2 = nlp(text)
+    assert preds == [t.tag_ for t in doc2]
+    pred_tensor = tagger_tok2vec.predict([doc2])
+    numpy.testing.assert_array_equal(doc_tensor, pred_tensor)
+
+    optimizer = nlp.resume_training()
+    trf_output_frozen = tagger_tok2vec.layers[0].predict([doc2])
+    for i in range(5):
+        losses = {}
+        nlp.update(examples, sgd=optimizer, losses=losses)
+        assert losses["tagger"] > 0.0
+    trf_output_frozen_after_update = tagger_tok2vec.layers[0].predict([doc2])
+
+    for x, y in zip(
+        trf_output_frozen.all_outputs, trf_output_frozen_after_update.all_outputs
+    ):
+        for x1, y1 in zip(x, y):
+            numpy.testing.assert_array_equal(x1.dataXd, y1.dataXd)
+
+    tagger_tok2vec.frozen_transformer = False
+    trf_output = tagger_tok2vec.layers[0].predict([doc2])
+    # attempt training with the new pipeline
+    for i in range(5):
+        losses = {}
+        nlp.update(examples, sgd=optimizer, losses=losses)
+        assert losses["tagger"] > 0.0
+    trained_trf_output = tagger_tok2vec.layers[0].predict([doc2])
+
+    for x, y in zip(trf_output.all_outputs, trained_trf_output.all_outputs):
+        for x1, y1 in zip(x, y):
+            assert not numpy.array_equal(x1.dataXd, y1.dataXd)
+
+    # ensure IO goes OK
+    doc_tensor_trained = tagger_tok2vec.predict([doc])
+
+    with make_tempdir() as d:
+        file_path = d / "trained_nlp"
+        nlp.to_disk(file_path)
+        nlp2 = util.load_model_from_path(file_path)
+        doc3 = nlp2(text)
+        tagger2 = nlp2.get_pipe("tagger")
+        tagger_tok2vec2 = tagger2.model.get_ref("tok2vec")
+        pred_tensor = tagger_tok2vec2.predict([doc3])
+        numpy.testing.assert_array_equal(doc_tensor_trained, pred_tensor)
