@@ -27,7 +27,7 @@ def torch_assertclose(
     )
 
 
-def xp_assert_equal(a, b):
+def xp_assert_array_equal(a, b):
     # Always convert to CPU since Cupy will strangely complain
     # about requiring a Numpy conversion before calling assert_array_close.
     if not isinstance(a, list):
