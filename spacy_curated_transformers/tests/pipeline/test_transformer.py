@@ -43,7 +43,7 @@ from spacy_curated_transformers.util import create_gradual_transformer_unfreezin
 
 from thinc.model import Model
 
-from ..util import make_tempdir, torch_assertclose
+from ..util import make_tempdir, torch_assertclose, xp_assert_array_equal
 
 cfg_string_last_layer_listener = """
     # LastTransformerLayerListener
@@ -640,7 +640,7 @@ def test_replace_listeners(cfg_string, listener_name, listener_entrypoint):
     doc2 = nlp(text)
     assert preds == [t.tag_ for t in doc2]
     pred_tensor = tagger_tok2vec.predict([doc2])
-    numpy.testing.assert_array_equal(doc_tensor, pred_tensor)
+    xp_assert_array_equal(doc_tensor, pred_tensor)
 
     optimizer = nlp.resume_training()
     trf_output_frozen = tagger_tok2vec.layers[0].predict([doc2])
@@ -654,7 +654,7 @@ def test_replace_listeners(cfg_string, listener_name, listener_entrypoint):
         trf_output_frozen.all_outputs, trf_output_frozen_after_update.all_outputs
     ):
         for x1, y1 in zip(x, y):
-            numpy.testing.assert_array_equal(x1.dataXd, y1.dataXd)
+            xp_assert_array_equal(x1.dataXd, y1.dataXd)
 
     tagger_tok2vec.frozen_transformer = False
     trf_output = tagger_tok2vec.layers[0].predict([doc2])
@@ -680,4 +680,4 @@ def test_replace_listeners(cfg_string, listener_name, listener_entrypoint):
         tagger2 = nlp2.get_pipe("tagger")
         tagger_tok2vec2 = tagger2.model.get_ref("tok2vec")
         pred_tensor = tagger_tok2vec2.predict([doc3])
-        numpy.testing.assert_array_equal(doc_tensor_trained, pred_tensor)
+        xp_assert_array_equal(doc_tensor_trained, pred_tensor)
