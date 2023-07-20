@@ -621,9 +621,9 @@ def replace_listener_callback(
     trf_pipe: Any,
 ):
     # To avoid cyclic imports.
-    from ..pipeline.transformer import Transformer
+    from ..pipeline.transformer import CuratedTransformer
 
-    assert isinstance(trf_pipe, Transformer)
+    assert isinstance(trf_pipe, CuratedTransformer)
     assert ListenerStateUtils.is_listener(trf_listener)
 
     copied_trf_listener = trf_listener.copy()

@@ -57,8 +57,8 @@ def make_transformer(
     *,
     frozen: bool = False,
     all_layer_outputs: bool = False,
-) -> "Transformer":
-    """Construct a Transformer component, which lets you plug a pre-trained
+) -> "CuratedTransformer":
+    """Construct a CuratedTransformer component, which lets you plug a pre-trained
     transformer model into spaCy so you can use it in your pipeline. One or
     more subsequent spaCy components can use the transformer outputs as features
     in its model, with gradients backpropagated to the single shared weights.
@@ -76,7 +76,7 @@ def make_transformer(
         output of the last layer is returned. This must be set to `True` if any of the pipe's
         downstream listeners require the outputs of all transformer layers.
     """
-    return Transformer(
+    return CuratedTransformer(
         nlp.vocab,
         model,
         name=name,
@@ -85,7 +85,7 @@ def make_transformer(
     )
 
 
-class Transformer(TrainablePipe):
+class CuratedTransformer(TrainablePipe):
     """spaCy pipeline component that provides access to a pre-trained transformer
     model from. Downstream components are connected to this pip using transformer
     listener layers. This works similarly to spaCy's Transformer component and
