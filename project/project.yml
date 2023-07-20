@@ -1,4 +1,4 @@
-title: "Curated transformers XLM-R pipeline"
+title: "spaCy Curated Transformers XLM-R pipeline"
 
 vars:
   lang: "nl"
