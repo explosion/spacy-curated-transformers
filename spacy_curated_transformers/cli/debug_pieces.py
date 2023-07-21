@@ -1,6 +1,7 @@
-from typing import Any, Dict, List, Optional, cast
-import numpy
 from pathlib import Path
+from typing import Any, Dict, List, Optional, cast
+
+import numpy
 from spacy import util
 from spacy.cli._util import (
     debug_cli,
@@ -11,11 +12,13 @@ from spacy.cli._util import (
 from spacy.schemas import ConfigSchemaTraining
 from spacy.tokens import Doc
 from spacy.util import registry, resolve_dot_names
-from typer import Argument as Arg, Context, Option as Opt
+from typer import Argument as Arg
+from typer import Context
+from typer import Option as Opt
 from wasabi import Printer, msg
 
+from ..pipeline.transformer import CuratedTransformer
 from ..tokenization.types import Tok2PiecesModelT
-from ..pipeline.transformer import Transformer
 
 
 @debug_cli.command(
@@ -64,7 +67,7 @@ def debug_pieces(
 
     if transformer_name is None:
         transformers = [
-            pipe for _, pipe in nlp.pipeline if isinstance(pipe, Transformer)
+            pipe for _, pipe in nlp.pipeline if isinstance(pipe, CuratedTransformer)
         ]
         if not transformers:
             msg.fail("Pipeline does not contain transformer", exits=1)
@@ -80,9 +83,9 @@ def debug_pieces(
             msg.fail(
                 f"Pipeline does not contain a pipe named '{transformer_name}'", exits=1
             )
-        if not isinstance(transformer_pipe_callable, Transformer):
+        if not isinstance(transformer_pipe_callable, CuratedTransformer):
             msg.fail(f"Pipe named '{transformer_name}' is not a transformer", exits=1)
-        transformer_pipe = cast(Transformer, transformer_pipe_callable)
+        transformer_pipe = cast(CuratedTransformer, transformer_pipe_callable)
 
     piece_encoder = transformer_pipe.model.get_ref("piece_encoder")
     msg.info(f"Found piece encoder: {piece_encoder.name}")

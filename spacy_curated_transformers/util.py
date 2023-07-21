@@ -1,13 +1,15 @@
-from typing import Any, Callable, Any, Iterable, Dict, TYPE_CHECKING
-from functools import partial
-from spacy.language import Language
 import itertools
+from functools import partial
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable
+
+from spacy.language import Language
+
 import thinc
 
 from .errors import Errors
 
 if TYPE_CHECKING:
-    from .pipeline.transformer import Transformer
+    from .pipeline.transformer import CuratedTransformer
 
 thinc.registry.create("model_loaders", entry_points=True)
 registry = thinc.registry
@@ -28,13 +30,13 @@ def gradual_transformer_unfreezing_per_pipe(
     current_step = callback_args["step"]
 
     # Scoped import to avoid import cycles.
-    from .pipeline.transformer import Transformer
+    from .pipeline.transformer import CuratedTransformer
 
     for name, pipe in nlp.components:
         unfreeze_step = freeze_params.get(name)
         if unfreeze_step is None:
             continue
-        elif not isinstance(pipe, Transformer):
+        elif not isinstance(pipe, CuratedTransformer):
             raise TypeError(Errors.E025.format(pipe_name=name))
 
         pipe.frozen = current_step < unfreeze_step
@@ -46,10 +48,10 @@ def gradual_transformer_unfreezing_all_pipes(
     current_step = callback_args["step"]
 
     # Scoped import to avoid import cycles.
-    from .pipeline.transformer import Transformer
+    from .pipeline.transformer import CuratedTransformer
 
     for _, pipe in nlp.components:
-        if not isinstance(pipe, Transformer):
+        if not isinstance(pipe, CuratedTransformer):
             continue
 
         pipe.frozen = current_step < unfreeze_step
