@@ -1,14 +1,14 @@
 from typing import List, Tuple, cast
+
 from thinc.api import Model, Ragged
 
 from .output import TransformerModelOutput
 from .types import (
-    SentMarkerRemoverInOutT,
-    SentMarkerRemoverBackpropT,
-    SentMarkerRemoverModelT,
     RaggedInOutT,
+    SentMarkerRemoverBackpropT,
+    SentMarkerRemoverInOutT,
+    SentMarkerRemoverModelT,
 )
-from ..errors import Errors
 
 
 def remove_bos_eos() -> SentMarkerRemoverModelT:
@@ -20,7 +20,11 @@ def remove_bos_eos_forward(
     model: Model, X: SentMarkerRemoverInOutT, is_train: bool
 ) -> Tuple[SentMarkerRemoverInOutT, SentMarkerRemoverBackpropT]:
     if not isinstance(X, TransformerModelOutput):
-        raise ValueError(Errors.E014.format(model_name=model.name, input_type=type(X)))
+        raise ValueError(
+            f"Model '{model.name}' received an unexpected input of type '{type(X)}'. "
+            "It can only wrap/be chained with models whose outputs are of type  "
+            "`TransformerModelOutput` (in almost all cases, models of type `TorchTransformerModelT`)"
+        )
 
     X.all_outputs = [[Xr[1:-1] for Xr in inner] for inner in X.all_outputs]
 

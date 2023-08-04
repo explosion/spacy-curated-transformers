@@ -1,21 +1,21 @@
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Union, cast
 from functools import partial
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union, cast
+
 from thinc.model import Model
-from thinc.types import Ragged, Floats2d, Ints1d
+from thinc.types import Floats2d, Ints1d, Ragged
 
 from .output import TransformerModelOutput
 from .types import (
-    RaggedInOutT,
     Floats2dInOutT,
+    RaggedInOutT,
     SpanExtractorBackpropT,
     SpanExtractorInT,
-    SpanExtractorOutT,
     SpanExtractorModelT,
+    SpanExtractorOutT,
     TorchTransformerInT,
     TorchTransformerModelT,
     TorchTransformerOutT,
 )
-from ..errors import Errors
 
 
 def build_with_strided_spans_v1(
@@ -46,12 +46,12 @@ def with_strided_spans(
 ) -> Model[List[Ragged], TransformerModelOutput]:
     if not (window // 2 <= stride <= window):
         raise ValueError(
-            Errors.E017.format(
-                stride=stride, half_window_size=window // 2, window_size=window
-            )
+            f"Span extractor stride ({stride}) must be within [window_size / 2, "
+            f"window_size] ([{window // 2}, {window}])"
         )
+
     if batch_size <= 0:
-        raise ValueError(Errors.E018)
+        raise ValueError("Span extractor batch size must be greater than zero")
 
     attrs = {
         "stride": stride,
@@ -108,8 +108,11 @@ def with_strided_spans_forward(
         output, bp = transformer(cast(TorchTransformerInT, batch), is_train=is_train)
         if not isinstance(output, TransformerModelOutput):
             raise ValueError(
-                Errors.E014.format(model_name=model.name, input_type=type(output))
+                f"Model '{model.name}' received an unexpected input of type '{type(output)}'. "
+                "It can only wrap/be chained with models whose outputs are of type  "
+                "`TransformerModelOutput` (in almost all cases, models of type `TorchTransformerModelT`)"
             )
+
         outputs.append(output)
         backprops.append(bp)
 

@@ -28,7 +28,6 @@ from thinc.model import Model
 from thinc.shims.pytorch_grad_scaler import PyTorchGradScaler
 from thinc.types import ArgsKwargs, Floats2d, Ints1d
 
-from ..errors import Errors
 from ..tokenization.types import Tok2PiecesModelT
 from .listeners import (
     WrappedTransformerAndListener,
@@ -721,7 +720,9 @@ def _convert_inputs(
     max_seq_len = max(x.size for x in X)
     if max_seq_len > max_model_seq_len:
         raise ValueError(
-            Errors.E009.format(seq_len=max_seq_len, max_seq_len=max_model_seq_len)
+            "At least one sequence in the transformer's input has a length "
+            f"of {max_seq_len}, which is larger than the model's maximum sequence "
+            f"length of {max_model_seq_len} tokens"
         )
 
     # Transform the list of strided spans to a padded array.
