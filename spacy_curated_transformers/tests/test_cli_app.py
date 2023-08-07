@@ -97,7 +97,7 @@ FILL_TRANSFORMER_CONFIG_STRS = [
 ]
 
 
-# @pytest.mark.slow
+@pytest.mark.slow
 @pytest.mark.skipif(not has_huggingface_hub, reason="requires Hugging Face Hub")
 @pytest.mark.skipif(
     not has_hf_transformers, reason="requires Hugging Face transformers"
