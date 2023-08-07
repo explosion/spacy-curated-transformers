@@ -236,6 +236,7 @@ def build_bert_transformer_model_v1(
         in downstream components.
     """
     config = BertConfig(
+        embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
         num_attention_heads=num_attention_heads,
@@ -342,6 +343,7 @@ def build_camembert_transformer_model_v1(
         in downstream components.
     """
     config = RobertaConfig(
+        embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
         num_attention_heads=num_attention_heads,
@@ -448,6 +450,7 @@ def build_roberta_transformer_model_v1(
         in downstream components.
     """
     config = RobertaConfig(
+        embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
         num_attention_heads=num_attention_heads,
@@ -554,6 +557,7 @@ def build_xlmr_transformer_model_v1(
         in downstream components.
     """
     config = RobertaConfig(
+        embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
         num_attention_heads=num_attention_heads,
