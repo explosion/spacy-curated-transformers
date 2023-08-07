@@ -92,7 +92,7 @@ FILL_TRANSFORMER_CONFIG_STRS = [
     [initialize.components.transformer]
     [initialize.components.transformer.encoder_loader]
     @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-    name = "explosion-testing/robesrta-test"
+    name = "explosion-testing/roberta-test"
     """,
 ]
 
