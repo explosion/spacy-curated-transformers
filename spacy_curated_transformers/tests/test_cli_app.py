@@ -2,6 +2,7 @@ import pytest
 import spacy_curated_transformers.cli.debug_pieces
 import spacy_curated_transformers.cli.fill_config_transformer
 from spacy.cli import app
+from spacy_curated_transformers._compat import has_hf_transformers, has_huggingface_hub
 from typer.testing import CliRunner
 
 from .util import make_tempdir
@@ -97,6 +98,10 @@ FILL_TRANSFORMER_CONFIG_STRS = [
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(not has_huggingface_hub, reason="requires Hugging Face Hub")
+@pytest.mark.skipif(
+    not has_hf_transformers, reason="requires Hugging Face transformers"
+)
 @pytest.mark.parametrize("config", FILL_TRANSFORMER_CONFIG_STRS)
 def test_fill_config_transformer(config):
     with make_tempdir() as d:
