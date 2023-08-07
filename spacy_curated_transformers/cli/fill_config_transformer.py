@@ -3,7 +3,6 @@ from enum import IntEnum
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from huggingface_hub import hf_hub_download
 from spacy import util
 from spacy.cli._util import import_code, init_cli, parse_config_overrides
 from spacy.cli.init_config import save_config
@@ -194,6 +193,8 @@ def init_fill_config_transformer(
 
 
 def _get_hf_model_config(name: str, revision: str) -> Dict[str, Any]:
+    from huggingface_hub import hf_hub_download
+
     config_path = hf_hub_download(
         repo_id=name, filename="config.json", revision=revision
     )
