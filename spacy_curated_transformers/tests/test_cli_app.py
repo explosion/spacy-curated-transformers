@@ -92,12 +92,12 @@ FILL_TRANSFORMER_CONFIG_STRS = [
     [initialize.components.transformer]
     [initialize.components.transformer.encoder_loader]
     @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-    name = "explosion-testing/roberta-test"
+    name = "explosion-testing/robesrta-test"
     """,
 ]
 
 
-@pytest.mark.slow
+# @pytest.mark.slow
 @pytest.mark.skipif(not has_huggingface_hub, reason="requires Hugging Face Hub")
 @pytest.mark.skipif(
     not has_hf_transformers, reason="requires Hugging Face transformers"
@@ -118,4 +118,12 @@ def test_fill_config_transformer(config):
                 "-",
             ],
         )
-        assert result.exit_code == 0
+        try:
+            assert result.exit_code == 0
+        except AssertionError:
+            if result.exception is not None:
+                raise result.exception
+            else:
+                raise ValueError(
+                    f"Curated Transformer fill config failed! Stderr: \n{result.stderr}"
+                )
