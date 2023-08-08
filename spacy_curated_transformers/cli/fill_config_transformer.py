@@ -257,7 +257,6 @@ def _load_hf_tokenizer(model_name: str, model_revision: str, msg: Printer) -> An
                 if model_max_length is not None:
                     hf_tokenzier.model_max_length = model_max_length
     except BaseException as e:
-        raise e
         msg.fail(
             f"Couldn't load Hugging Face tokenizer '{model_name}' ('{model_revision}') - Error:\n{e}",
             exits=1,
