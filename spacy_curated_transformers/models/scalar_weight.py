@@ -1,16 +1,17 @@
-from typing import List, Tuple, Callable, cast
+from typing import Callable, List, Tuple, cast
+
+from curated_transformers.models.scalar_weight import ScalarWeight
+from spacy.util import SimpleFrozenDict
 from thinc.layers.pytorchwrapper import PyTorchWrapper_v2
 from thinc.model import Model
-from thinc.types import ArgsKwargs, Ragged
 from thinc.shims.pytorch_grad_scaler import PyTorchGradScaler
+from thinc.types import ArgsKwargs, Ragged
 from thinc.util import torch2xp, xp2torch
 from torch import Tensor
-from spacy.util import SimpleFrozenDict
 
-from ..util import all_equal
-from .types import ScalarWeightInT, ScalarWeightOutT, ScalarWeightModelT
-from curated_transformers.models.scalar_weight import ScalarWeight
 from ..errors import Errors
+from ..util import all_equal
+from .types import ScalarWeightInT, ScalarWeightModelT, ScalarWeightOutT
 
 
 def build_scalar_weight_v1(

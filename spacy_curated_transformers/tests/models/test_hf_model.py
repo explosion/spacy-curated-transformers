@@ -1,12 +1,13 @@
+from dataclasses import dataclass
 from typing import Callable
+
+import pytest
 from curated_transformers.models.albert import AlbertEncoder
 from curated_transformers.models.albert.config import AlbertConfig
 from curated_transformers.models.attention import AttentionMask
 from curated_transformers.models.bert import BertConfig, BertEncoder
 from curated_transformers.models.roberta.config import RobertaConfig
 from curated_transformers.models.roberta.encoder import RobertaEncoder
-from dataclasses import dataclass
-import pytest
 from thinc.api import get_torch_default_device
 from torch.nn import Module
 

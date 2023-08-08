@@ -1,4 +1,4 @@
-from thinc.api import Ragged, reduce_sum, NumpyOps
+from thinc.api import NumpyOps, Ragged, reduce_sum
 from thinc.util import convert_recursive, is_cupy_array
 
 from spacy_curated_transformers.models.pooling import (

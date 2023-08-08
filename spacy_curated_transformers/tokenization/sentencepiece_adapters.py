@@ -1,13 +1,9 @@
-from typing import Tuple
 from functools import lru_cache
+from typing import Tuple
 
 from thinc.api import Model, Ragged
 
-from .types import (
-    PieceAdapterBackpropT,
-    PieceAdapterInOutT,
-    PieceAdapterModelT,
-)
+from .types import PieceAdapterBackpropT, PieceAdapterInOutT, PieceAdapterModelT
 
 _FAIRSEQ_OFFSET = 1
 _CAMEMBERT_FAIRSEQ_OFFSET = 4

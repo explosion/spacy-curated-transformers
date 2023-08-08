@@ -1,13 +1,13 @@
 import pytest
-from thinc.api import Ragged, registry, get_current_ops
+from thinc.api import Ragged, get_current_ops, registry
 
-from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
-    build_sentencepiece_encoder_v1,
-)
+from spacy_curated_transformers._compat import has_hf_transformers
 from spacy_curated_transformers.tokenization.hf_loader import (
     build_hf_piece_encoder_loader_v1,
 )
-from spacy_curated_transformers._compat import has_hf_transformers
+from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
+    build_sentencepiece_encoder_v1,
+)
 
 
 @pytest.fixture

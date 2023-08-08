@@ -11,6 +11,8 @@ from spacy.training import Example
 from spacy.training.initialize import init_nlp
 from spacy.training.loop import train
 from spacy.util import registry as spacy_registry
+from thinc.model import Model
+
 from spacy_curated_transformers._compat import has_hf_transformers, transformers
 from spacy_curated_transformers.models.architectures import (
     build_bert_transformer_model_v1,
@@ -40,8 +42,6 @@ from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
     build_sentencepiece_encoder_loader_v1,
 )
 from spacy_curated_transformers.util import create_gradual_transformer_unfreezing
-
-from thinc.model import Model
 
 from ..util import make_tempdir, torch_assertclose, xp_assert_array_equal
 

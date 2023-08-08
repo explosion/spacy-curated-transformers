@@ -1,17 +1,21 @@
 import pytest
-from thinc.api import Ragged, registry, get_current_ops
+from thinc.api import Ragged, get_current_ops, registry
 
-from spacy_curated_transformers.tokenization.bbpe_encoder import build_byte_bpe_encoder_v1
-from spacy_curated_transformers.tokenization.hf_loader import build_hf_piece_encoder_loader_v1
 from spacy_curated_transformers._compat import has_hf_transformers
+from spacy_curated_transformers.tokenization.bbpe_encoder import (
+    build_byte_bpe_encoder_v1,
+)
+from spacy_curated_transformers.tokenization.hf_loader import (
+    build_hf_piece_encoder_loader_v1,
+)
 
 
 @pytest.fixture
 def toy_encoder(test_dir):
     encoder = build_byte_bpe_encoder_v1()
-    encoder.init = registry.model_loaders.get("spacy-curated-transformers.ByteBpeLoader.v1")(
-        vocab_path=test_dir / "toy-vocab.json", merges_path=test_dir / "toy-merges.txt"
-    )
+    encoder.init = registry.model_loaders.get(
+        "spacy-curated-transformers.ByteBpeLoader.v1"
+    )(vocab_path=test_dir / "toy-vocab.json", merges_path=test_dir / "toy-merges.txt")
     encoder.initialize()
     return encoder
 

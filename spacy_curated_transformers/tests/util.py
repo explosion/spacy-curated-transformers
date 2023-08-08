@@ -4,7 +4,6 @@ import tempfile
 from pathlib import Path
 
 import torch
-
 from thinc.api import NumpyOps
 
 

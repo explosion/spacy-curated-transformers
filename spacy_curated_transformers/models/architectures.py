@@ -14,7 +14,6 @@ from curated_transformers.models.output import PyTorchTransformerOutput
 from curated_transformers.models.roberta import RobertaConfig, RobertaEncoder
 from spacy.tokens import Doc
 from spacy.util import SimpleFrozenDict
-
 from thinc.api import (
     Model,
     PyTorchWrapper_v2,

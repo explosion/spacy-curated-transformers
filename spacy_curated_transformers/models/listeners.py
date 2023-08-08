@@ -2,7 +2,6 @@ from typing import Any, Callable, Iterable, List, Optional, Tuple
 
 from spacy import Errors as SpacyErrors
 from spacy.tokens import Doc
-
 from thinc.api import Model, deserialize_attr, serialize_attr
 from thinc.types import Floats2d, Ragged
 
@@ -219,7 +218,8 @@ class ListenerStateUtils:
     ) -> bool:
         """If True, the listener will perform its operations on the transformer output
         annotations stored on the Doc objects. Otherwise, it will perform its operations
-        on the outputs that were stored directly in it using `TransformerListener.receive`."""
+        on the outputs that were stored directly in it using `TransformerListener.receive`.
+        """
         return listener.attrs[cls.USE_DOC_ANNOTATIONS_FOR_PREDICTION]
 
     @classmethod
