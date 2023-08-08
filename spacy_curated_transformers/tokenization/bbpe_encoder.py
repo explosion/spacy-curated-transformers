@@ -1,17 +1,12 @@
-from typing import Callable, Optional, Tuple
 from pathlib import Path
+from typing import Callable, Optional, Tuple
 
-from curated_tokenizers import ByteBPEProcessor
 import srsly
+from curated_tokenizers import ByteBPEProcessor
 from thinc.api import Model, Ragged, deserialize_attr, serialize_attr
 
-from .types import (
-    Tok2PiecesBackpropT,
-    Tok2PiecesInT,
-    Tok2PiecesModelT,
-    Tok2PiecesOutT,
-)
 from ..errors import Errors
+from .types import Tok2PiecesBackpropT, Tok2PiecesInT, Tok2PiecesModelT, Tok2PiecesOutT
 
 
 @serialize_attr.register(ByteBPEProcessor)

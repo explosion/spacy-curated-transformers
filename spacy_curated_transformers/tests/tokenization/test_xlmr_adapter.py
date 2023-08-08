@@ -1,25 +1,26 @@
 from typing import List
-from curated_tokenizers import SentencePieceProcessor
+
 import pytest
-from thinc.api import Ragged, chain, Model, get_current_ops, NumpyOps
+from curated_tokenizers import SentencePieceProcessor
+from thinc.api import Model, NumpyOps, Ragged, chain, get_current_ops
 from thinc.util import convert_recursive, is_cupy_array
 
 from spacy_curated_transformers._compat import has_hf_transformers, transformers
-from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
-    build_sentencepiece_encoder_v1,
-    build_xlmr_sentencepiece_encoder_v1,
+from spacy_curated_transformers.models.output import TransformerModelOutput
+from spacy_curated_transformers.models.remove_eos_bos import remove_bos_eos
+from spacy_curated_transformers.tokenization.hf_loader import (
+    build_hf_piece_encoder_loader_v1,
 )
 from spacy_curated_transformers.tokenization.sentencepiece_adapters import (
     build_xlmr_adapter,
 )
+from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
+    build_sentencepiece_encoder_v1,
+    build_xlmr_sentencepiece_encoder_v1,
+)
 from spacy_curated_transformers.tokenization.wordpiece_encoder import (
     build_wordpiece_encoder_v1,
 )
-from spacy_curated_transformers.tokenization.hf_loader import (
-    build_hf_piece_encoder_loader_v1,
-)
-from spacy_curated_transformers.models.output import TransformerModelOutput
-from spacy_curated_transformers.models.remove_eos_bos import remove_bos_eos
 
 
 @pytest.fixture

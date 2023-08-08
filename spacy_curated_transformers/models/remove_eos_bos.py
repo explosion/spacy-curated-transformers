@@ -1,14 +1,15 @@
 from typing import List, Tuple, cast
+
 from thinc.api import Model, Ragged
 
+from ..errors import Errors
 from .output import TransformerModelOutput
 from .types import (
-    SentMarkerRemoverInOutT,
-    SentMarkerRemoverBackpropT,
-    SentMarkerRemoverModelT,
     RaggedInOutT,
+    SentMarkerRemoverBackpropT,
+    SentMarkerRemoverInOutT,
+    SentMarkerRemoverModelT,
 )
-from ..errors import Errors
 
 
 def remove_bos_eos() -> SentMarkerRemoverModelT:

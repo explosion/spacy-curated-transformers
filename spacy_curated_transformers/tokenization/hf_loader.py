@@ -1,16 +1,12 @@
-from typing import Callable, Optional
 import json
-
+from typing import Callable, Optional
 
 from .._compat import has_hf_transformers, transformers
+from ..errors import Errors
 from .bbpe_encoder import ByteBPEProcessor
 from .sentencepiece_encoder import SentencePieceProcessor
+from .types import Tok2PiecesInT, Tok2PiecesModelT
 from .wordpiece_encoder import WordPieceProcessor
-from .types import (
-    Tok2PiecesInT,
-    Tok2PiecesModelT,
-)
-from ..errors import Errors
 
 if has_hf_transformers:
     SUPPORTED_TOKENIZERS = (

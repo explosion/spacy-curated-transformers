@@ -1,21 +1,22 @@
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Union, cast
 from functools import partial
-from thinc.model import Model
-from thinc.types import Ragged, Floats2d, Ints1d
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union, cast
 
+from thinc.model import Model
+from thinc.types import Floats2d, Ints1d, Ragged
+
+from ..errors import Errors
 from .output import TransformerModelOutput
 from .types import (
-    RaggedInOutT,
     Floats2dInOutT,
+    RaggedInOutT,
     SpanExtractorBackpropT,
     SpanExtractorInT,
-    SpanExtractorOutT,
     SpanExtractorModelT,
+    SpanExtractorOutT,
     TorchTransformerInT,
     TorchTransformerModelT,
     TorchTransformerOutT,
 )
-from ..errors import Errors
 
 
 def build_with_strided_spans_v1(

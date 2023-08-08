@@ -2,9 +2,8 @@ import itertools
 from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable
 
-from spacy.language import Language
-
 import thinc
+from spacy.language import Language
 
 from .errors import Errors
 

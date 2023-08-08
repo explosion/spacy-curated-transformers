@@ -1,4 +1,5 @@
 from typing import List
+
 from thinc.api import Model, chain
 from thinc.types import Floats2d, Ragged
 
