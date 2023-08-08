@@ -1,16 +1,16 @@
-from typing import List, Tuple, Callable, cast
+from typing import Callable, List, Tuple, cast
+
+from curated_transformers.models.scalar_weight import ScalarWeight
+from spacy.util import SimpleFrozenDict
 from thinc.layers.pytorchwrapper import PyTorchWrapper_v2
 from thinc.model import Model
-from thinc.types import ArgsKwargs, Ragged
 from thinc.shims.pytorch_grad_scaler import PyTorchGradScaler
+from thinc.types import ArgsKwargs, Ragged
 from thinc.util import torch2xp, xp2torch
 from torch import Tensor
-from spacy.util import SimpleFrozenDict
 
 from ..util import all_equal
-from .types import ScalarWeightInT, ScalarWeightOutT, ScalarWeightModelT
-from curated_transformers.models.scalar_weight import ScalarWeight
-from ..errors import Errors
+from .types import ScalarWeightInT, ScalarWeightModelT, ScalarWeightOutT
 
 
 def build_scalar_weight_v1(
@@ -65,10 +65,16 @@ def _convert_inputs(
     max_seq_len = max(seq_lens)
     num_layers = [len(x) for x in X]
     if not all_equal(num_layers):
-        raise ValueError(Errors.E015.format(layer_counts=set(num_layers)))
+        raise ValueError(
+            "Input passed to the `ScalarWeight` model do not have the same number "
+            f"layers. Distinct layer counts: {set(num_layers)}"
+        )
     layer_widths = [layer.data.shape[1] for x in X for layer in x]
     if not all_equal(layer_widths):
-        raise ValueError(Errors.E016.format(hidden_widths=set(layer_widths)))
+        raise ValueError(
+            "Input passed to the `ScalarWeight` model do not have the same width. "
+            f"Distinct widths: {set(layer_widths)}"
+        )
 
     # [batch_size, max_seq_len, num_layers, layer_width]
     Xops = ops.alloc4f(batch_size, max_seq_len, num_layers[0], layer_widths[0])

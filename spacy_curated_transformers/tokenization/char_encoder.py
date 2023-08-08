@@ -1,10 +1,10 @@
-from typing import Callable, Dict, Optional, OrderedDict, Tuple
-from pathlib import Path
-from thinc.api import Model, Ragged
 import unicodedata
+from pathlib import Path
+from typing import Callable, Dict, Optional, OrderedDict, Tuple
+
+from thinc.api import Model, Ragged
 
 from .types import Tok2PiecesBackpropT, Tok2PiecesInT, Tok2PiecesModelT, Tok2PiecesOutT
-from ..errors import Errors
 
 
 def build_char_encoder_v1() -> Tok2PiecesModelT:
@@ -44,7 +44,10 @@ def char_encoder_forward(
     """
     vocab: Optional[Dict[str, int]] = model.attrs["vocab"]
     if vocab is None:
-        raise ValueError(Errors.E020)
+        raise ValueError(
+            "Character piece encoder vocabulary is not available. Use a loader "
+            "to initialize the encoder."
+        )
 
     bos_piece: str = model.attrs["bos_piece"]
     eos_piece: str = model.attrs["eos_piece"]
@@ -101,7 +104,11 @@ def build_char_encoder_loader_v1(
 
     def load(model, X=None, Y=None):
         if model.name != "char_encoder":
-            raise ValueError(Errors.E021.format(model_name=model.name))
+            raise ValueError(
+                "Attempting to use the `CharEncoderLoader` piece encoder loader with an "
+                f"incompatible model ('{model.name}'). It can only be used with the "
+                "`CharEncoder` piece encoder"
+            )
 
         model.attrs["bos_piece"] = bos_piece
         model.attrs["eos_piece"] = eos_piece

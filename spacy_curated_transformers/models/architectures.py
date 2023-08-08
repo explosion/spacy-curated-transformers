@@ -14,7 +14,6 @@ from curated_transformers.models.output import PyTorchTransformerOutput
 from curated_transformers.models.roberta import RobertaConfig, RobertaEncoder
 from spacy.tokens import Doc
 from spacy.util import SimpleFrozenDict
-
 from thinc.api import (
     Model,
     PyTorchWrapper_v2,
@@ -28,7 +27,6 @@ from thinc.model import Model
 from thinc.shims.pytorch_grad_scaler import PyTorchGradScaler
 from thinc.types import ArgsKwargs, Floats2d, Ints1d
 
-from ..errors import Errors
 from ..tokenization.types import Tok2PiecesModelT
 from .listeners import (
     WrappedTransformerAndListener,
@@ -236,6 +234,7 @@ def build_bert_transformer_model_v1(
         in downstream components.
     """
     config = BertConfig(
+        embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
         num_attention_heads=num_attention_heads,
@@ -342,6 +341,7 @@ def build_camembert_transformer_model_v1(
         in downstream components.
     """
     config = RobertaConfig(
+        embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
         num_attention_heads=num_attention_heads,
@@ -448,6 +448,7 @@ def build_roberta_transformer_model_v1(
         in downstream components.
     """
     config = RobertaConfig(
+        embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
         num_attention_heads=num_attention_heads,
@@ -554,6 +555,7 @@ def build_xlmr_transformer_model_v1(
         in downstream components.
     """
     config = RobertaConfig(
+        embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
         num_attention_heads=num_attention_heads,
@@ -721,7 +723,9 @@ def _convert_inputs(
     max_seq_len = max(x.size for x in X)
     if max_seq_len > max_model_seq_len:
         raise ValueError(
-            Errors.E009.format(seq_len=max_seq_len, max_seq_len=max_model_seq_len)
+            "At least one sequence in the transformer's input has a length "
+            f"of {max_seq_len}, which is larger than the model's maximum sequence "
+            f"length of {max_model_seq_len} tokens"
         )
 
     # Transform the list of strided spans to a padded array.

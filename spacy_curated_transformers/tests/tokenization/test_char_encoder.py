@@ -1,17 +1,23 @@
 import pytest
-from thinc.api import Ragged, get_current_ops
 import spacy
+from thinc.api import Ragged, get_current_ops
 
+from spacy_curated_transformers._compat import (
+    has_fugashi,
+    has_hf_transformers,
+    has_sudachi,
+)
 from spacy_curated_transformers.tokenization.char_encoder import (
     build_char_encoder_loader_v1,
     build_char_encoder_v1,
 )
-from spacy_curated_transformers.tokenization.hf_loader import build_hf_piece_encoder_loader_v1
+from spacy_curated_transformers.tokenization.hf_loader import (
+    build_hf_piece_encoder_loader_v1,
+)
 from spacy_curated_transformers.tokenization.wordpiece_encoder import (
     build_wordpiece_encoder_v1,
 )
 from spacy_curated_transformers.util import registry
-from spacy_curated_transformers._compat import has_fugashi, has_hf_transformers, has_sudachi
 
 
 def test_char_encoder(test_dir):

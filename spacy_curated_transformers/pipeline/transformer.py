@@ -17,12 +17,10 @@ from spacy.pipeline import TrainablePipe
 from spacy.tokens import Doc
 from spacy.training import Example, validate_examples, validate_get_examples
 from spacy.util import minibatch
-
 from thinc.api import Config, Optimizer, set_dropout_rate
 from thinc.model import Model
 from thinc.types import Ragged
 
-from ..errors import Errors
 from ..models.listeners import ListenerStateUtils
 from ..models.output import DocTransformerOutput, TransformerModelOutput
 from ..models.types import TransformerListenerModelT
@@ -150,7 +148,10 @@ class CuratedTransformer(TrainablePipe):
     ) -> None:
         """Add a listener for a downstream component. Usually internals."""
         if not ListenerStateUtils.is_listener(listener):
-            raise ValueError(Errors.E026.format(model_name=listener.name))
+            raise ValueError(
+                f"Attempting to register a model ('{listener.name}') with the transformer pipe"
+                "that isn't a transformer listener"
+            )
 
         self.listener_map.setdefault(component_name, [])
         if listener not in self.listener_map[component_name]:

@@ -1,16 +1,11 @@
-from typing import Callable, Optional
 import json
-
+from typing import Callable, Optional
 
 from .._compat import has_hf_transformers, transformers
 from .bbpe_encoder import ByteBPEProcessor
 from .sentencepiece_encoder import SentencePieceProcessor
+from .types import Tok2PiecesInT, Tok2PiecesModelT
 from .wordpiece_encoder import WordPieceProcessor
-from .types import (
-    Tok2PiecesInT,
-    Tok2PiecesModelT,
-)
-from ..errors import Errors
 
 if has_hf_transformers:
     SUPPORTED_TOKENIZERS = (
@@ -41,7 +36,9 @@ def build_hf_piece_encoder_loader_v1(
 
     def load(model, X=None, Y=None):
         if not has_hf_transformers:
-            raise ValueError(Errors.E011.format(loader_name="HFPieceEncoderLoader"))
+            raise ValueError(
+                "`HFPieceEncoderLoader` requires the Hugging Face `transformers` package to be installed"
+            )
 
         tokenizer = transformers.AutoTokenizer.from_pretrained(name, revision=revision)
         return _convert_encoder(model, tokenizer)
@@ -65,10 +62,8 @@ def _convert_encoder(
         return _convert_bert_japanese_encoder(model, tokenizer)
     else:
         raise ValueError(
-            Errors.E022.format(
-                unsupported_tokenizer=type(tokenizer),
-                supported_tokenizers=SUPPORTED_TOKENIZERS,
-            )
+            "Attempting to load an unsupported Hugging Face tokenizer "
+            f"({type(tokenizer)}). Currently supported tokenizers: {SUPPORTED_TOKENIZERS}"
         )
 
 
@@ -136,9 +131,15 @@ def _convert_bert_japanese_encoder(
         tokenizer.subword_tokenizer,
         transformers.models.bert_japanese.CharacterTokenizer,
     ):
-        raise ValueError(Errors.E023)
+        raise ValueError(
+            "Japanese BERT models currently only support character subword encoding"
+        )
     if model.name != "char_encoder":
-        raise ValueError(Errors.E024.format(model_name=model.name))
+        raise ValueError(
+            f"Attempting to initialize an incompatible piece encoder ('{model.name}') "
+            "with the Hugging Face Japanese BERT tokenizer. It can only be used with the "
+            "`CharEncoder` piece encoder"
+        )
 
     model.attrs["bos_piece"] = tokenizer.cls_token
     model.attrs["eos_piece"] = tokenizer.sep_token

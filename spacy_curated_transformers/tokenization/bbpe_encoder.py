@@ -1,17 +1,11 @@
-from typing import Callable, Optional, Tuple
 from pathlib import Path
+from typing import Callable, Optional, Tuple
 
-from curated_tokenizers import ByteBPEProcessor
 import srsly
+from curated_tokenizers import ByteBPEProcessor
 from thinc.api import Model, Ragged, deserialize_attr, serialize_attr
 
-from .types import (
-    Tok2PiecesBackpropT,
-    Tok2PiecesInT,
-    Tok2PiecesModelT,
-    Tok2PiecesOutT,
-)
-from ..errors import Errors
+from .types import Tok2PiecesBackpropT, Tok2PiecesInT, Tok2PiecesModelT, Tok2PiecesOutT
 
 
 @serialize_attr.register(ByteBPEProcessor)
@@ -57,13 +51,19 @@ def byte_bpe_encoder_forward(
     unk_piece: str = model.attrs["unk_piece"]
     bos_id = bbp.piece_id(bos_piece)
     if bos_id is None:
-        raise ValueError(Errors.E019.format(piece="BOS"))
+        raise ValueError(
+            "Byte-BPE piece encoder vocabulary doesn't contain 'BOS' piece"
+        )
     eos_id = bbp.piece_id(eos_piece)
     if eos_id is None:
-        raise ValueError(Errors.E019.format(piece="EOS"))
+        raise ValueError(
+            "Byte-BPE piece encoder vocabulary doesn't contain 'EOS' piece"
+        )
     unk_id = bbp.piece_id(unk_piece)
     if unk_id is None:
-        raise ValueError(Errors.E019.format(piece="UNK"))
+        raise ValueError(
+            "Byte-BPE piece encoder vocabulary doesn't contain 'UNK' piece"
+        )
 
     pieces = []
     for doc in X:

@@ -2,11 +2,8 @@ import itertools
 from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable
 
-from spacy.language import Language
-
 import thinc
-
-from .errors import Errors
+from spacy.language import Language
 
 if TYPE_CHECKING:
     from .pipeline.transformer import CuratedTransformer
@@ -37,7 +34,10 @@ def gradual_transformer_unfreezing_per_pipe(
         if unfreeze_step is None:
             continue
         elif not isinstance(pipe, CuratedTransformer):
-            raise TypeError(Errors.E025.format(pipe_name=name))
+            raise TypeError(
+                "Attempting to perform gradual unfreezing of a non-transformer pipe "
+                f"('{name}'. Only transformer pipes support this feature"
+            )
 
         pipe.frozen = current_step < unfreeze_step
 
@@ -70,7 +70,10 @@ def create_gradual_transformer_unfreezing(
     """
     unfreeze_step_all_pipes = target_pipes.get("*")
     if unfreeze_step_all_pipes is not None and len(target_pipes) > 1:
-        raise ValueError(Errors.E013)
+        raise ValueError(
+            "The target pipe names for gradual transformer unfreezing contain both the "
+            "wild-card operator ('*') and individual names. Use either of the two but not both"
+        )
 
     if unfreeze_step_all_pipes is not None:
         return partial(

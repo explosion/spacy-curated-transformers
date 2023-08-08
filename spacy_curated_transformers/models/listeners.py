@@ -2,11 +2,9 @@ from typing import Any, Callable, Iterable, List, Optional, Tuple
 
 from spacy import Errors as SpacyErrors
 from spacy.tokens import Doc
-
 from thinc.api import Model, deserialize_attr, serialize_attr
 from thinc.types import Floats2d, Ragged
 
-from ..errors import Errors
 from .output import TransformerModelOutput
 from .pooling import with_ragged_last_layer, with_ragged_layers
 from .types import (
@@ -219,7 +217,8 @@ class ListenerStateUtils:
     ) -> bool:
         """If True, the listener will perform its operations on the transformer output
         annotations stored on the Doc objects. Otherwise, it will perform its operations
-        on the outputs that were stored directly in it using `TransformerListener.receive`."""
+        on the outputs that were stored directly in it using `TransformerListener.receive`.
+        """
         return listener.attrs[cls.USE_DOC_ANNOTATIONS_FOR_PREDICTION]
 
     @classmethod
@@ -322,9 +321,12 @@ def transformer_layers_listener_forward(
     if is_train:
         assert _outputs is not None
         if _outputs.last_layer_only:
-            raise ValueError(
-                Errors.E012.format(listener_name="TransformerLayersListener")
-            )
+            raise ValueError
+        (
+            "`TransformerLayersListener` requires the upstream transformer pipe to output "
+            "all hidden layer outputs. This can be enabled by setting the pipe's "
+            "`all_layer_outputs` parameter to `True` in the pipeline config"
+        )
 
         ListenerStateUtils.verify_inputs(model, docs)
 
@@ -360,7 +362,9 @@ def transformer_layers_listener_forward(
 
             if any(doc._.trf_data.last_layer_only for doc in docs):
                 raise ValueError(
-                    Errors.E012.format(listener_name="TransformerLayersListener")
+                    "`TransformerLayersListener` requires the upstream transformer pipe to output "
+                    "all hidden layer outputs. This can be enabled by setting the pipe's "
+                    "`all_layer_outputs` parameter to `True` in the pipeline config"
                 )
 
             return pooling.predict(docs), lambda dY: []
@@ -438,8 +442,11 @@ def scalar_weighting_listener_forward(
         assert _outputs is not None
         if _outputs.last_layer_only:
             raise ValueError(
-                Errors.E012.format(listener_name="ScalarWeightingListener")
+                "`ScalarWeightingListener` requires the upstream transformer pipe to output "
+                "all hidden layer outputs. This can be enabled by setting the pipe's "
+                "`all_layer_outputs` parameter to `True` in the pipeline config"
             )
+
         ListenerStateUtils.verify_inputs(model, docs)
 
         Y_weighting: ScalarWeightOutT = []
@@ -476,7 +483,9 @@ def scalar_weighting_listener_forward(
 
             if any(doc._.trf_data.last_layer_only for doc in docs):
                 raise ValueError(
-                    Errors.E012.format(listener_name="ScalarWeightingListener")
+                    "`ScalarWeightingListener` requires the upstream transformer pipe to output "
+                    "all hidden layer outputs. This can be enabled by setting the pipe's "
+                    "`all_layer_outputs` parameter to `True` in the pipeline config"
                 )
 
             Y_weighting = weighting.predict(
