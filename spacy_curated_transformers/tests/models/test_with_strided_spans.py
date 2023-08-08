@@ -1,9 +1,10 @@
 from typing import List
-from spacy_curated_transformers.models.output import TransformerModelOutput
+
 import pytest
-from thinc.api import Model, get_current_ops, Ragged, with_array, chain
+from thinc.api import Model, Ragged, chain, get_current_ops, with_array
 from thinc.types import Floats2d
 
+from spacy_curated_transformers.models.output import TransformerModelOutput
 from spacy_curated_transformers.models.with_strided_spans import with_strided_spans
 
 

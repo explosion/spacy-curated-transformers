@@ -17,7 +17,6 @@ from spacy.pipeline import TrainablePipe
 from spacy.tokens import Doc
 from spacy.training import Example, validate_examples, validate_get_examples
 from spacy.util import minibatch
-
 from thinc.api import Config, Optimizer, set_dropout_rate
 from thinc.model import Model
 from thinc.types import Ragged

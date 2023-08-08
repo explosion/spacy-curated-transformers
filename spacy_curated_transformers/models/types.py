@@ -1,7 +1,6 @@
 from typing import Any, Callable, Iterable, List, Union
 
 from spacy.tokens.doc import Doc
-
 from thinc.model import Model
 from thinc.types import Floats2d, Ints1d, Ragged
 

@@ -5,7 +5,6 @@ from spacy.tokens.token import Token
 from thinc.model import Model
 from thinc.types import Ragged
 
-
 TokenSequenceT = TypeVar("TokenSequenceT", Doc, List[Token])
 
 Tok2PiecesInT = List[TokenSequenceT]

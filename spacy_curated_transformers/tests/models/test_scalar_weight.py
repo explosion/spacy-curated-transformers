@@ -1,5 +1,5 @@
-from thinc.api import Ragged, get_current_ops
 import torch
+from thinc.api import Ragged, get_current_ops
 
 from spacy_curated_transformers.models.scalar_weight import build_scalar_weight_v1
 

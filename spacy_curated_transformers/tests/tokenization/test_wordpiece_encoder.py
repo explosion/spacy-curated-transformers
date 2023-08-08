@@ -1,18 +1,19 @@
+from tempfile import TemporaryDirectory
+
 import pytest
 import spacy
-from tempfile import TemporaryDirectory
 from thinc.api import Ragged, get_current_ops
 
+from spacy_curated_transformers._compat import has_hf_transformers, transformers
 from spacy_curated_transformers.tokenization.hf_loader import (
     build_hf_piece_encoder_loader_v1,
 )
 from spacy_curated_transformers.tokenization.wordpiece_encoder import (
-    build_bert_wordpiece_encoder_v1,
-    build_wordpiece_encoder_v1,
     _bert_preprocess,
+    build_bert_wordpiece_encoder_v1,
     build_wordpiece_encoder_loader_v1,
+    build_wordpiece_encoder_v1,
 )
-from spacy_curated_transformers._compat import has_hf_transformers, transformers
 
 
 def test_wordpiece_encoder_local_model(wordpiece_toy_encoder, sample_docs):

@@ -3,6 +3,7 @@ from curated_tokenizers import SentencePieceProcessor
 from thinc.api import CupyOps, NumpyOps, Ragged, registry
 from thinc.compat import has_cupy
 
+from spacy_curated_transformers._compat import has_hf_transformers, has_huggingface_hub
 from spacy_curated_transformers.models.architectures import (
     build_albert_transformer_model_v1,
     build_bert_transformer_model_v1,
@@ -23,11 +24,6 @@ from spacy_curated_transformers.tokenization import (
     build_sentencepiece_encoder_v1,
     build_xlmr_sentencepiece_encoder_v1,
 )
-from spacy_curated_transformers._compat import (
-    has_hf_transformers,
-    has_huggingface_hub,
-)
-
 
 OPS = [NumpyOps()]
 if has_cupy:

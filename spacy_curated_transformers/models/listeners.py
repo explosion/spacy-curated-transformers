@@ -2,7 +2,6 @@ from typing import Any, Callable, Iterable, List, Optional, Tuple
 
 from spacy import Errors as SpacyErrors
 from spacy.tokens import Doc
-
 from thinc.api import Model, deserialize_attr, serialize_attr
 from thinc.types import Floats2d, Ragged
 
