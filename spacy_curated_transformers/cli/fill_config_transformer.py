@@ -22,7 +22,7 @@ def init_fill_config_transformer_cli(
     # fmt: off
     ctx: Context,  # This is only used to read additional arguments
     base_path: Path = Arg(..., help="Path to the base config file to fill", exists=True, allow_dash=True, dir_okay=False),
-    output_path: Path = Arg(..., help="Path to output .cfg file (or - for stdout)", exists=False, allow_dash=True),
+    output_path: Path = Arg("-", help="Path to output .cfg file (or - for stdout)", exists=False, allow_dash=True),
     code_path: Optional[Path] = Opt(None, "--code-path", "--code", "-c", help="Path to Python file with additional code (registered functions) to be imported"),
     transformer_name: Optional[str] = Opt(None, "--name", "-n", help="Name of the transformer pipe whose config is to be filled (default: first transformer pipe)."),
     # fmt: on
