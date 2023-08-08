@@ -1,5 +1,5 @@
 import json
-from enum import IntEnum
+from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -53,9 +53,9 @@ CURATED_TRANSFORMER_TO_HF_MODEL_TYPE: Dict[str, str] = {
 }
 
 
-class HfParamSource(IntEnum):
-    MODEL_CONFIG = (1,)
-    TOKENIZER_CONFIG = (2,)
+class HfParamSource(Enum):
+    MODEL_CONFIG = 1
+    TOKENIZER_CONFIG = 2
 
 
 # Entrypoint parameters that are common to all curated transformer models.
