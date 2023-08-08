@@ -1,10 +1,10 @@
 from typing import Callable, List, Optional
+
+from curated_transformers.models.hf_util import convert_hf_pretrained_model_parameters
 from spacy.tokens import Doc
 
-from .._compat import transformers, has_hf_transformers
-from curated_transformers.models.hf_util import convert_hf_pretrained_model_parameters
+from .._compat import has_hf_transformers, transformers
 from .types import TorchTransformerModelT
-from ..errors import Errors
 
 
 def build_hf_transformer_encoder_loader_v1(
@@ -27,7 +27,7 @@ def build_hf_transformer_encoder_loader_v1(
     def load(model, X=None, Y=None):
         if not has_hf_transformers:
             raise ValueError(
-                Errors.E011.format(loader_name="HFTransformerEncoderLoader")
+                "`HFTransformerEncoderLoader` requires the Hugging Face `transformers` package to be installed"
             )
 
         encoder = model.shims[0]._model
