@@ -2,13 +2,12 @@ from typing import Callable, List, Tuple, cast
 
 from curated_transformers.models.scalar_weight import ScalarWeight
 from spacy.util import SimpleFrozenDict
-from torch import Tensor
-
 from thinc.layers.pytorchwrapper import PyTorchWrapper_v2
 from thinc.model import Model
 from thinc.shims.pytorch_grad_scaler import PyTorchGradScaler
 from thinc.types import ArgsKwargs, Ragged
 from thinc.util import torch2xp, xp2torch
+from torch import Tensor
 
 from ..util import all_equal
 from .types import ScalarWeightInT, ScalarWeightModelT, ScalarWeightOutT

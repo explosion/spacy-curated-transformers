@@ -3,7 +3,6 @@ from typing import Callable, Optional, Tuple
 
 import srsly
 from curated_tokenizers import ByteBPEProcessor
-
 from thinc.api import Model, Ragged, deserialize_attr, serialize_attr
 
 from .types import Tok2PiecesBackpropT, Tok2PiecesInT, Tok2PiecesModelT, Tok2PiecesOutT

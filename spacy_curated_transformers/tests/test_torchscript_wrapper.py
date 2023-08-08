@@ -1,12 +1,12 @@
-import pytest
 import numpy
-from torch.nn import Linear
+import pytest
+from thinc.api import get_array_module
 from thinc.layers import (
     PyTorchWrapper_v2,
     TorchScriptWrapper_v1,
     pytorch_to_torchscript_wrapper,
 )
-from thinc.api import get_array_module
+from torch.nn import Linear
 
 
 @pytest.mark.parametrize("nN,nI,nO", [(2, 3, 4)])

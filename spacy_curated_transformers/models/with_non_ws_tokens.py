@@ -1,17 +1,17 @@
-from typing import List, Optional, Tuple, Iterator, Any, cast
-from dataclasses import dataclass
 from collections import Counter
+from dataclasses import dataclass
+from typing import Any, Iterator, List, Optional, Tuple, cast
 
 from spacy.tokens import Doc
 from thinc.api import Model, Ragged
 
-from .types import (
-    WsTokenAdapterInT,
-    WsTokenAdapterOutT,
-    WsTokenAdapterBackpropT,
-    WsTokenAdapterModelT,
-)
 from ..tokenization.types import Tok2PiecesInT
+from .types import (
+    WsTokenAdapterBackpropT,
+    WsTokenAdapterInT,
+    WsTokenAdapterModelT,
+    WsTokenAdapterOutT,
+)
 
 
 @dataclass

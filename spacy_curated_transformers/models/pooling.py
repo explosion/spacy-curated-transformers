@@ -1,11 +1,11 @@
 from typing import List, Union
+
 import numpy
 from spacy.tokens import Doc
 from thinc.api import Model
 from thinc.types import Ragged
 
-
-from .types import WithRaggedLayersModelT, WithRaggedLastLayerModelT, PoolingModelT
+from .types import PoolingModelT, WithRaggedLastLayerModelT, WithRaggedLayersModelT
 
 
 def with_ragged_layers(

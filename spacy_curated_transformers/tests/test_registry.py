@@ -1,5 +1,6 @@
 import pytest
 from spacy.util import registry as spacy_registry
+
 from spacy_curated_transformers.util import registry
 
 
