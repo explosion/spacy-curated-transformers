@@ -218,7 +218,8 @@ class ListenerStateUtils:
     ) -> bool:
         """If True, the listener will perform its operations on the transformer output
         annotations stored on the Doc objects. Otherwise, it will perform its operations
-        on the outputs that were stored directly in it using `TransformerListener.receive`."""
+        on the outputs that were stored directly in it using `TransformerListener.receive`.
+        """
         return listener.attrs[cls.USE_DOC_ANNOTATIONS_FOR_PREDICTION]
 
     @classmethod
