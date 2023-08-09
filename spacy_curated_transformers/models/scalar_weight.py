@@ -1,15 +1,16 @@
 from typing import Callable, List, Tuple, cast
 
-from curated_transformers.models.scalar_weight import ScalarWeight
 from spacy.util import SimpleFrozenDict
+from torch import Tensor
+
 from thinc.layers.pytorchwrapper import PyTorchWrapper_v2
 from thinc.model import Model
 from thinc.shims.pytorch_grad_scaler import PyTorchGradScaler
 from thinc.types import ArgsKwargs, Ragged
 from thinc.util import torch2xp, xp2torch
-from torch import Tensor
 
 from ..util import all_equal
+from .pytorch import ScalarWeightClassifier
 from .types import ScalarWeightInT, ScalarWeightModelT, ScalarWeightOutT
 
 
@@ -40,8 +41,8 @@ def build_scalar_weight_v1(
         grad_scaler_config["enabled"] = mixed_precision
 
     # Increment number of layers by one to include the embedding layer.
-    scalar_weighting_layer = ScalarWeight(
-        num_layers=num_layers + 1, dropout_prob=dropout_prob
+    scalar_weighting_layer = ScalarWeightClassifier(
+        n_layers=num_layers + 1, dropout_prob=dropout_prob
     )
 
     model = PyTorchWrapper_v2(
