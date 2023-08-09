@@ -11,14 +11,14 @@ from curated_transformers.models import (
     RoBERTaConfig,
     RoBERTaEncoder,
 )
+from thinc.api import get_torch_default_device
+from torch.nn import Module
+
 from spacy_curated_transformers._compat import has_hf_transformers, transformers
 from spacy_curated_transformers.models.architectures import _pytorch_encoder
 from spacy_curated_transformers.models.hf_loader import (
     build_hf_transformer_encoder_loader_v1,
 )
-from torch.nn import Module
-
-from thinc.api import get_torch_default_device
 
 from ..util import torch_assertclose
 

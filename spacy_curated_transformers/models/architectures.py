@@ -19,7 +19,6 @@ from curated_transformers.models import (
 )
 from spacy.tokens import Doc
 from spacy.util import SimpleFrozenDict
-
 from thinc.api import (
     Model,
     PyTorchWrapper_v2,
