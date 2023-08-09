@@ -3,17 +3,23 @@ from pathlib import Path
 from typing import Any, Callable, List, Optional, Tuple, Union, cast
 
 import torch
-from curated_transformers.models.albert import AlbertConfig, AlbertEncoder
-from curated_transformers.models.bert import BertConfig, BertEncoder
-from curated_transformers.models.curated_transformer import (
-    CuratedEncoderT,
-    CuratedTransformer,
+from curated_transformers.layers import Activation, AttentionMask
+from curated_transformers.models import (
+    ALBERTConfig,
+    ALBERTEncoder,
+    BERTConfig,
+    BERTEncoder,
+    CamemBERTEncoder,
+    EncoderModule,
+    FromHFHub,
+    ModelOutput,
+    RoBERTaConfig,
+    RoBERTaEncoder,
+    XLMREncoder,
 )
-from curated_transformers.models.hf_util import convert_pretrained_model_for_encoder
-from curated_transformers.models.output import PyTorchTransformerOutput
-from curated_transformers.models.roberta import RobertaConfig, RobertaEncoder
 from spacy.tokens import Doc
 from spacy.util import SimpleFrozenDict
+
 from thinc.api import (
     Model,
     PyTorchWrapper_v2,
@@ -125,22 +131,21 @@ def build_albert_transformer_model_v1(
         Optional listener to wrap. Only used when replacing listeners
         in downstream components.
     """
-    config = AlbertConfig(
+    config = ALBERTConfig(
         embedding_width=embedding_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
-        num_attention_heads=num_attention_heads,
-        num_hidden_groups=num_hidden_groups,
-        num_hidden_layers=num_hidden_layers,
+        n_attention_heads=num_attention_heads,
+        n_hidden_groups=num_hidden_groups,
+        n_hidden_layers=num_hidden_layers,
         attention_probs_dropout_prob=attention_probs_dropout_prob,
         hidden_dropout_prob=hidden_dropout_prob,
-        hidden_act=hidden_act,
-        vocab_size=vocab_size,
-        type_vocab_size=type_vocab_size,
-        max_position_embeddings=max_position_embeddings,
+        activation=Activation(hidden_act),
+        n_pieces=vocab_size,
+        n_types=type_vocab_size,
+        n_positions=max_position_embeddings,
         model_max_length=model_max_length,
         layer_norm_eps=layer_norm_eps,
-        padding_idx=padding_idx,
     )
 
     if torchscript:
@@ -148,10 +153,12 @@ def build_albert_transformer_model_v1(
             model_max_length=model_max_length, padding_idx=padding_idx
         )
     else:
-        encoder = AlbertEncoder(config)
+        encoder = ALBERTEncoder(config)
         transformer = _pytorch_encoder(
             encoder,
             hidden_width=hidden_width,
+            model_max_length=model_max_length,
+            padding_idx=padding_idx,
             mixed_precision=mixed_precision,
             grad_scaler_config=grad_scaler_config,
         )
@@ -233,21 +240,20 @@ def build_bert_transformer_model_v1(
         Optional listener to wrap. Only used when replacing listeners
         in downstream components.
     """
-    config = BertConfig(
+    config = BERTConfig(
         embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
-        num_attention_heads=num_attention_heads,
-        num_hidden_layers=num_hidden_layers,
+        n_attention_heads=num_attention_heads,
+        n_hidden_layers=num_hidden_layers,
         attention_probs_dropout_prob=attention_probs_dropout_prob,
         hidden_dropout_prob=hidden_dropout_prob,
-        hidden_act=hidden_act,
-        vocab_size=vocab_size,
-        type_vocab_size=type_vocab_size,
-        max_position_embeddings=max_position_embeddings,
+        activation=Activation(hidden_act),
+        n_pieces=vocab_size,
+        n_types=type_vocab_size,
+        n_positions=max_position_embeddings,
         model_max_length=model_max_length,
         layer_norm_eps=layer_norm_eps,
-        padding_idx=padding_idx,
     )
 
     if torchscript:
@@ -255,10 +261,12 @@ def build_bert_transformer_model_v1(
             model_max_length=model_max_length, padding_idx=padding_idx
         )
     else:
-        encoder = BertEncoder(config)
+        encoder = BERTEncoder(config)
         transformer = _pytorch_encoder(
             encoder,
             hidden_width=hidden_width,
+            model_max_length=model_max_length,
+            padding_idx=padding_idx,
             mixed_precision=mixed_precision,
             grad_scaler_config=grad_scaler_config,
         )
@@ -340,21 +348,20 @@ def build_camembert_transformer_model_v1(
         Optional listener to wrap. Only used when replacing listeners
         in downstream components.
     """
-    config = RobertaConfig(
+    config = RoBERTaConfig(
         embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
-        num_attention_heads=num_attention_heads,
-        num_hidden_layers=num_hidden_layers,
+        n_attention_heads=num_attention_heads,
+        n_hidden_layers=num_hidden_layers,
         attention_probs_dropout_prob=attention_probs_dropout_prob,
         hidden_dropout_prob=hidden_dropout_prob,
-        hidden_act=hidden_act,
-        vocab_size=vocab_size,
-        type_vocab_size=type_vocab_size,
-        max_position_embeddings=max_position_embeddings,
+        activation=Activation(hidden_act),
+        n_pieces=vocab_size,
+        n_types=type_vocab_size,
+        n_positions=max_position_embeddings,
         model_max_length=model_max_length,
         layer_norm_eps=layer_norm_eps,
-        padding_idx=padding_idx,
     )
 
     if torchscript:
@@ -362,10 +369,12 @@ def build_camembert_transformer_model_v1(
             model_max_length=model_max_length, padding_idx=padding_idx
         )
     else:
-        encoder = RobertaEncoder(config)
+        encoder = CamemBERTEncoder(config)
         transformer = _pytorch_encoder(
             encoder,
             hidden_width=hidden_width,
+            model_max_length=model_max_length,
+            padding_idx=padding_idx,
             mixed_precision=mixed_precision,
             grad_scaler_config=grad_scaler_config,
         )
@@ -447,21 +456,20 @@ def build_roberta_transformer_model_v1(
         Optional listener to wrap. Only used when replacing listeners
         in downstream components.
     """
-    config = RobertaConfig(
+    config = RoBERTaConfig(
         embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
-        num_attention_heads=num_attention_heads,
-        num_hidden_layers=num_hidden_layers,
+        n_attention_heads=num_attention_heads,
+        n_hidden_layers=num_hidden_layers,
         attention_probs_dropout_prob=attention_probs_dropout_prob,
         hidden_dropout_prob=hidden_dropout_prob,
-        hidden_act=hidden_act,
-        vocab_size=vocab_size,
-        type_vocab_size=type_vocab_size,
-        max_position_embeddings=max_position_embeddings,
+        activation=Activation(hidden_act),
+        n_pieces=vocab_size,
+        n_types=type_vocab_size,
+        n_positions=max_position_embeddings,
         model_max_length=model_max_length,
         layer_norm_eps=layer_norm_eps,
-        padding_idx=padding_idx,
     )
 
     if torchscript:
@@ -469,10 +477,12 @@ def build_roberta_transformer_model_v1(
             model_max_length=model_max_length, padding_idx=padding_idx
         )
     else:
-        encoder = RobertaEncoder(config)
+        encoder = RoBERTaEncoder(config)
         transformer = _pytorch_encoder(
             encoder,
             hidden_width=hidden_width,
+            model_max_length=model_max_length,
+            padding_idx=padding_idx,
             mixed_precision=mixed_precision,
             grad_scaler_config=grad_scaler_config,
         )
@@ -554,21 +564,20 @@ def build_xlmr_transformer_model_v1(
         Optional listener to wrap. Only used when replacing listeners
         in downstream components.
     """
-    config = RobertaConfig(
+    config = RoBERTaConfig(
         embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
-        num_attention_heads=num_attention_heads,
-        num_hidden_layers=num_hidden_layers,
+        n_attention_heads=num_attention_heads,
+        n_hidden_layers=num_hidden_layers,
         attention_probs_dropout_prob=attention_probs_dropout_prob,
         hidden_dropout_prob=hidden_dropout_prob,
-        hidden_act=hidden_act,
-        vocab_size=vocab_size,
-        type_vocab_size=type_vocab_size,
-        max_position_embeddings=max_position_embeddings,
+        activation=Activation(hidden_act),
+        n_pieces=vocab_size,
+        n_types=type_vocab_size,
+        n_positions=max_position_embeddings,
         model_max_length=model_max_length,
         layer_norm_eps=layer_norm_eps,
-        padding_idx=padding_idx,
     )
 
     if torchscript:
@@ -576,10 +585,12 @@ def build_xlmr_transformer_model_v1(
             model_max_length=model_max_length, padding_idx=padding_idx
         )
     else:
-        encoder = RobertaEncoder(config)
+        encoder = XLMREncoder(config)
         transformer = _pytorch_encoder(
             encoder,
             hidden_width=hidden_width,
+            model_max_length=model_max_length,
+            padding_idx=padding_idx,
             mixed_precision=mixed_precision,
             grad_scaler_config=grad_scaler_config,
         )
@@ -620,8 +631,6 @@ def build_transformer_model_v1(
     transformer: TorchTransformerModelT,
     piece_encoder: Tok2PiecesModelT,
 ) -> TransformerModelT:
-    # FIXME: do we want to make `remove_bos_eos` configurable as well or
-    #        is it always the same post-processing?
     layers = [
         with_non_ws_tokens(
             chain(piece_encoder, with_spans(transformer), remove_bos_eos())
@@ -668,8 +677,10 @@ def transformer_model_init(
 
 
 def _pytorch_encoder(
-    encoder: CuratedEncoderT,
+    encoder: EncoderModule,
     hidden_width: int,
+    padding_idx: int,
+    model_max_length: int,
     *,
     mixed_precision: bool = False,
     grad_scaler_config: dict = SimpleFrozenDict(),
@@ -682,11 +693,11 @@ def _pytorch_encoder(
         grad_scaler_config["enabled"] = mixed_precision
 
     model = PyTorchWrapper_v2(
-        CuratedTransformer(encoder),
+        encoder,
         convert_inputs=partial(
             _convert_inputs,
-            max_model_seq_len=encoder.max_seq_len,
-            padding_idx=encoder.padding_idx,
+            max_model_seq_len=model_max_length,
+            padding_idx=padding_idx,
         ),
         convert_outputs=_convert_outputs,
         mixed_precision=mixed_precision,
@@ -735,18 +746,19 @@ def _convert_inputs(
         span_len = span.shape[0]
         Xt[i, :span_len] = span
     Xt = xp2torch(Xt)
+    mask = AttentionMask(Xt.ne(padding_idx))
 
     def convert_from_torch_backward(d_inputs: Any):
         # No gradients for the inputs.
         return [ops.alloc1f(x.shape[0]) for x in X]
 
-    output = ArgsKwargs(args=(Xt,), kwargs={})
+    output = ArgsKwargs(args=(Xt, mask), kwargs={})
     return output, convert_from_torch_backward
 
 
 def _convert_outputs(
     model: Model,
-    inputs_outputs: Tuple[TorchTransformerInT, PyTorchTransformerOutput],
+    inputs_outputs: Tuple[TorchTransformerInT, ModelOutput],
     is_train: bool,
 ) -> Tuple[TorchTransformerOutT, Callable[[List[List[Floats2d]]], ArgsKwargs]]:
     model_inputs, model_outputs = inputs_outputs
@@ -799,10 +811,12 @@ def build_pytorch_checkpoint_loader_v1(
     """
 
     def load(model, X=None, Y=None):
-        encoder = model.shims[0]._model
         device = get_torch_default_device()
+        encoder = model.shims[0]._model
+        assert isinstance(encoder, FromHFHub)
+
         params = torch.load(path, map_location=device)
-        params = convert_pretrained_model_for_encoder(encoder, params)
+        params = encoder.convert_hf_state_dict(params)
         encoder.load_state_dict(params)
         encoder.to(device)
         return model

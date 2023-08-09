@@ -2,55 +2,78 @@ from dataclasses import dataclass
 from typing import Callable
 
 import pytest
-from curated_transformers.models.albert import AlbertEncoder
-from curated_transformers.models.albert.config import AlbertConfig
-from curated_transformers.models.attention import AttentionMask
-from curated_transformers.models.bert import BertConfig, BertEncoder
-from curated_transformers.models.roberta.config import RobertaConfig
-from curated_transformers.models.roberta.encoder import RobertaEncoder
-from thinc.api import get_torch_default_device
-from torch.nn import Module
-
+from curated_transformers.layers import AttentionMask
+from curated_transformers.models import (
+    ALBERTConfig,
+    ALBERTEncoder,
+    BERTConfig,
+    BERTEncoder,
+    RoBERTaConfig,
+    RoBERTaEncoder,
+)
 from spacy_curated_transformers._compat import has_hf_transformers, transformers
 from spacy_curated_transformers.models.architectures import _pytorch_encoder
 from spacy_curated_transformers.models.hf_loader import (
     build_hf_transformer_encoder_loader_v1,
 )
+from torch.nn import Module
+
+from thinc.api import get_torch_default_device
 
 from ..util import torch_assertclose
 
 
 @dataclass
 class ModelConfig:
-    config: BertConfig
-    encoder: Callable[[BertConfig], Module]
+    config: BERTConfig
+    encoder: Callable[[BERTConfig], Module]
     hf_model_name: str
     hidden_width: int
+    max_seq_len: int
+    padding_idx: int
 
 
 TEST_MODELS = [
     ModelConfig(
-        AlbertConfig(vocab_size=30000),
-        AlbertEncoder,
+        ALBERTConfig(n_pieces=30000),
+        ALBERTEncoder,
         "albert-base-v2",
         hidden_width=768,
+        max_seq_len=512,
+        padding_idx=0,
     ),
     ModelConfig(
-        BertConfig(vocab_size=28996), BertEncoder, "bert-base-cased", hidden_width=768
+        BERTConfig(n_pieces=28996),
+        BERTEncoder,
+        "bert-base-cased",
+        hidden_width=768,
+        max_seq_len=512,
+        padding_idx=0,
     ),
-    ModelConfig(RobertaConfig(), RobertaEncoder, "roberta-base", hidden_width=768),
     ModelConfig(
-        RobertaConfig(vocab_size=250002),
-        RobertaEncoder,
+        RoBERTaConfig(),
+        RoBERTaEncoder,
+        "roberta-base",
+        hidden_width=768,
+        max_seq_len=512,
+        padding_idx=1,
+    ),
+    ModelConfig(
+        RoBERTaConfig(n_pieces=250002),
+        RoBERTaEncoder,
         "xlm-roberta-base",
         hidden_width=768,
+        max_seq_len=512,
+        padding_idx=1,
     ),
 ]
 
 
 def encoder_from_config(config: ModelConfig):
     encoder = config.encoder(config.config)
-    model = _pytorch_encoder(encoder, config.hidden_width)
+    model = _pytorch_encoder(
+        encoder, config.hidden_width, config.padding_idx, config.max_seq_len
+    )
     model.init = build_hf_transformer_encoder_loader_v1(name=config.hf_model_name)
     return model
 
@@ -94,13 +117,6 @@ def test_model_against_hf_transformers(model_config):
     Y_hf_encoder = hf_encoder(X, attention_mask=attention_mask)
 
     torch_assertclose(
-        Y_encoder.last_hidden_layer_states,
-        Y_hf_encoder.last_hidden_state,
-    )
-
-    # Try to infer the attention mask from padding.
-    Y_encoder = encoder(X)
-    torch_assertclose(
-        Y_encoder.last_hidden_layer_states,
+        Y_encoder.last_hidden_layer_state,
         Y_hf_encoder.last_hidden_state,
     )
