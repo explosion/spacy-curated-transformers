@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from spacy.cli import app
 from typer.testing import CliRunner
@@ -14,88 +16,269 @@ def test_debug_pieces():
     assert result.exit_code == 0
 
 
-FILL_TRANSFORMER_CONFIG_STRS = [
-    """
-    [nlp]
-    lang = "en"
-    pipeline = ["transformer"]
-    [components]
-    [components.transformer]
-    factory = "curated_transformer"
-    [components.transformer.model]
-    @architectures = "spacy-curated-transformers.XlmrTransformer.v1"
-    [initialize]
-    [initialize.components]
-    [initialize.components.transformer]
-    [initialize.components.transformer.encoder_loader]
-    @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-    name = "explosion-testing/xlm-roberta-test"
-    """,
-    """
-    [nlp]
-    lang = "en"
-    pipeline = ["transformer"]
-    [components]
-    [components.transformer]
-    factory = "curated_transformer"
-    [components.transformer.model]
-    @architectures = "spacy-curated-transformers.AlbertTransformer.v1"
-    [initialize]
-    [initialize.components]
-    [initialize.components.transformer]
-    [initialize.components.transformer.encoder_loader]
-    @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-    name = "explosion-testing/albert-test"
-    """,
-    """
-    [nlp]
-    lang = "en"
-    pipeline = ["transformer"]
-    [components]
-    [components.transformer]
-    factory = "curated_transformer"
-    [components.transformer.model]
-    @architectures = "spacy-curated-transformers.BertTransformer.v1"
-    [initialize]
-    [initialize.components]
-    [initialize.components.transformer]
-    [initialize.components.transformer.encoder_loader]
-    @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-    name = "explosion-testing/bert-test"
-    """,
-    """
-    [nlp]
-    lang = "en"
-    pipeline = ["transformer"]
-    [components]
-    [components.transformer]
-    factory = "curated_transformer"
-    [components.transformer.model]
-    @architectures = "spacy-curated-transformers.CamembertTransformer.v1"
-    [initialize]
-    [initialize.components]
-    [initialize.components.transformer]
-    [initialize.components.transformer.encoder_loader]
-    @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-    name = "explosion-testing/camembert-test"
-    """,
-    """
-    [nlp]
-    lang = "en"
-    pipeline = ["transformer"]
-    [components]
-    [components.transformer]
-    factory = "curated_transformer"
-    [components.transformer.model]
-    @architectures = "spacy-curated-transformers.RobertaTransformer.v1"
-    [initialize]
-    [initialize.components]
-    [initialize.components.transformer]
-    [initialize.components.transformer.encoder_loader]
-    @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-    name = "explosion-testing/roberta-test"
-    """,
+# fmt: off
+FILL_TRANSFORMER_CONFIG_STRS_AND_OUTPUTS = [
+(
+"""
+[nlp]
+lang = "en"
+pipeline = ["transformer"]
+[components]
+[components.transformer]
+factory = "curated_transformer"
+[components.transformer.model]
+@architectures = "spacy-curated-transformers.AlbertTransformer.v1"
+[initialize]
+[initialize.components]
+[initialize.components.transformer]
+[initialize.components.transformer.encoder_loader]
+@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
+name = "explosion-testing/albert-test"
+[initialize.components.transformer.piece_loader]
+@model_loaders = "spacy-curated-transformers.ByteBpeLoader.v1"
+""",
+
+"""
+[nlp]
+lang = "en"
+pipeline = ["transformer"]
+[components]
+[components.transformer]
+factory = "curated_transformer"
+[components.transformer.model]
+@architectures = "spacy-curated-transformers.AlbertTransformer.v1"
+attention_probs_dropout_prob = 0
+hidden_act = "gelu_new"
+hidden_dropout_prob = 0
+hidden_width = 32
+intermediate_width = 37
+layer_norm_eps = 0.0
+max_position_embeddings = 512
+num_attention_heads = 4
+num_hidden_layers = 5
+padding_idx = 0
+type_vocab_size = 16
+vocab_size = 1024
+embedding_width = 128
+num_hidden_groups = 1
+[initialize]
+[initialize.components]
+[initialize.components.transformer]
+piece_loader = {"@model_loaders":"spacy-curated-transformers.ByteBpeLoader.v1"}
+[initialize.components.transformer.encoder_loader]
+@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
+name = "explosion-testing/albert-test"
+""",
+),
+
+(
+"""
+[nlp]
+lang = "en"
+pipeline = ["transformer"]
+[components]
+[components.transformer]
+factory = "curated_transformer"
+[components.transformer.model]
+@architectures = "spacy-curated-transformers.BertTransformer.v1"
+[initialize]
+[initialize.components]
+[initialize.components.transformer]
+[initialize.components.transformer.encoder_loader]
+@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
+name = "explosion-testing/bert-test"
+""",
+
+"""
+[nlp]
+lang = "en"
+pipeline = ["transformer"]
+[components]
+[components.transformer]
+factory = "curated_transformer"
+[components.transformer.model]
+@architectures = "spacy-curated-transformers.BertTransformer.v1"
+attention_probs_dropout_prob = 0.1
+hidden_act = "gelu"
+hidden_dropout_prob = 0.1
+hidden_width = 32
+intermediate_width = 37
+layer_norm_eps = 0.0
+max_position_embeddings = 512
+num_attention_heads = 4
+num_hidden_layers = 5
+padding_idx = 0
+type_vocab_size = 16
+vocab_size = 1024
+[initialize]
+[initialize.components]
+[initialize.components.transformer]
+[initialize.components.transformer.encoder_loader]
+@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
+name = "explosion-testing/bert-test"
+[initialize.components.transformer.piece_loader]
+@model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
+name = "explosion-testing/bert-test"
+""",
+),
+
+(
+"""
+[nlp]
+lang = "en"
+pipeline = ["transformer"]
+[components]
+[components.transformer]
+factory = "curated_transformer"
+[components.transformer.model]
+@architectures = "spacy-curated-transformers.CamembertTransformer.v1"
+[initialize]
+[initialize.components]
+[initialize.components.transformer]
+[initialize.components.transformer.encoder_loader]
+@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
+name = "explosion-testing/camembert-test"
+""",
+
+"""
+[nlp]
+lang = "en"
+pipeline = ["transformer"]
+[components]
+[components.transformer]
+factory = "curated_transformer"
+[components.transformer.model]
+@architectures = "spacy-curated-transformers.CamembertTransformer.v1"
+attention_probs_dropout_prob = 0.1
+hidden_act = "gelu"
+hidden_dropout_prob = 0.1
+hidden_width = 32
+intermediate_width = 37
+layer_norm_eps = 0.00001
+max_position_embeddings = 512
+num_attention_heads = 4
+num_hidden_layers = 5
+padding_idx = 1
+type_vocab_size = 16
+vocab_size = 1024
+[initialize]
+[initialize.components]
+[initialize.components.transformer]
+[initialize.components.transformer.encoder_loader]
+@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
+name = "explosion-testing/camembert-test"
+[initialize.components.transformer.piece_loader]
+@model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
+name = "explosion-testing/camembert-test"
+""",
+),
+
+(
+"""
+[nlp]
+lang = "en"
+pipeline = ["transformer"]
+[components]
+[components.transformer]
+factory = "curated_transformer"
+[components.transformer.model]
+@architectures = "spacy-curated-transformers.RobertaTransformer.v1"
+[initialize]
+[initialize.components]
+[initialize.components.transformer]
+[initialize.components.transformer.encoder_loader]
+@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
+name = "explosion-testing/roberta-test"
+""",
+
+"""
+[nlp]
+lang = "en"
+pipeline = ["transformer"]
+[components]
+[components.transformer]
+factory = "curated_transformer"
+[components.transformer.model]
+@architectures = "spacy-curated-transformers.RobertaTransformer.v1"
+attention_probs_dropout_prob = 0.1
+hidden_act = "gelu"
+hidden_dropout_prob = 0.1
+hidden_width = 32
+intermediate_width = 37
+layer_norm_eps = 0.00001
+max_position_embeddings = 512
+num_attention_heads = 4
+num_hidden_layers = 5
+padding_idx = 1
+type_vocab_size = 16
+vocab_size = 1024
+[initialize]
+[initialize.components]
+[initialize.components.transformer]
+[initialize.components.transformer.encoder_loader]
+@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
+name = "explosion-testing/roberta-test"
+[initialize.components.transformer.piece_loader]
+@model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
+name = "explosion-testing/roberta-test"
+""",
+),
+
+(
+"""
+[nlp]
+lang = "en"
+pipeline = ["transformer"]
+[components]
+[components.transformer]
+factory = "curated_transformer"
+[components.transformer.model]
+@architectures = "spacy-curated-transformers.XlmrTransformer.v1"
+[initialize]
+[initialize.components]
+[initialize.components.transformer]
+[initialize.components.transformer.encoder_loader]
+@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
+name = "explosion-testing/xlm-roberta-test"
+[initialize.components.transformer.piece_loader]
+@model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
+name = "will-be-overwritten"
+""",
+
+"""
+[nlp]
+lang = "en"
+pipeline = ["transformer"]
+[components]
+[components.transformer]
+factory = "curated_transformer"
+[components.transformer.model]
+@architectures = "spacy-curated-transformers.XlmrTransformer.v1"
+attention_probs_dropout_prob = 0.1
+hidden_act = "gelu"
+hidden_dropout_prob = 0.1
+hidden_width = 32
+intermediate_width = 37
+layer_norm_eps = 0.00001
+max_position_embeddings = 512
+num_attention_heads = 4
+num_hidden_layers = 5
+padding_idx = 1
+type_vocab_size = 16
+vocab_size = 1024
+[initialize]
+[initialize.components]
+[initialize.components.transformer]
+[initialize.components.transformer.encoder_loader]
+@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
+name = "explosion-testing/xlm-roberta-test"
+[initialize.components.transformer.piece_loader]
+@model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
+name = "explosion-testing/xlm-roberta-test"
+""",
+),
 ]
+# fmt: on
 
 
 @pytest.mark.slow
@@ -103,10 +286,11 @@ FILL_TRANSFORMER_CONFIG_STRS = [
 @pytest.mark.skipif(
     not has_hf_transformers, reason="requires Hugging Face transformers"
 )
-@pytest.mark.parametrize("config", FILL_TRANSFORMER_CONFIG_STRS)
-def test_fill_config_transformer(config):
+@pytest.mark.parametrize("config, output", FILL_TRANSFORMER_CONFIG_STRS_AND_OUTPUTS)
+def test_fill_config_transformer(config, output):
     with make_tempdir() as d:
         file_path = d / "test_conf"
+        output_path = d / "output_conf"
         with open(file_path, "w", encoding="utf8") as f:
             f.writelines([config])
 
@@ -116,7 +300,7 @@ def test_fill_config_transformer(config):
                 "init",
                 "fill-config-transformer",
                 str(file_path),
-                "-",
+                str(output_path),
             ],
         )
         try:
@@ -128,3 +312,14 @@ def test_fill_config_transformer(config):
                 raise ValueError(
                     f"Curated Transformer fill config failed! Stderr: \n{result.stderr}"
                 )
+
+        with open(output_path, "r", encoding="utf8") as f:
+            all_lines = f.readlines()
+            # Remove the model_max_length key as its value is platform-dependent
+            valid_lines = [l for l in all_lines if "model_max_length" not in l]
+
+            # Remove all whitespace and compare.
+            output_str = "".join(valid_lines)
+            output_str = re.sub(r"\s*", "", output_str)
+            expected_str = re.sub(r"\s*", "", output)
+            assert output_str == expected_str
