@@ -183,13 +183,40 @@ def init_fill_config_transformer(
                 )
         filled_params[param_name] = value
 
-    msg.info(title="Filled-in model parameters")
+    msg.info(title="Filled-in model parameters:")
     msg.table(filled_params)
 
     trf_config = config["components"][transformer_name]["model"]
     trf_config.update(filled_params)
 
+    piece_loader = _get_piece_loader_config(config, transformer_name)
+    if piece_loader is None:
+        trf_init = config["initialize"]["components"][transformer_name]
+        trf_init["piece_loader"] = {
+            "@model_loaders": "spacy-curated-transformers.HFPieceEncoderLoader.v1",
+            "name": model_name,
+        }
+        if model_revision != "main":
+            trf_init["piece_loader"]["revision"] = model_revision
+    else:
+        arch = piece_loader["@model_loaders"]
+        if "HFPieceEncoderLoader" not in arch:
+            msg.warn(
+                f"Existing piece encoder loader '{arch}' might not be compatible with model '{model_name}'"
+            )
+        else:
+            name = piece_loader["name"]
+            if name != model_name:
+                msg.warn(
+                    f"Overwriting piece encoder loader model ('{name}') with '{model_name}'"
+                )
+                piece_loader["name"] = model_name
+                if model_revision != "main":
+                    piece_loader["revision"] = model_revision
+
     is_stdout = str(output_path) == "-"
+    if is_stdout:
+        msg.info(title="Output:")
     save_config(config, output_path, is_stdout=is_stdout, silent=is_stdout)
 
 
@@ -215,6 +242,16 @@ def _get_encoder_loader_config(
         assert "HFTransformerEncoderLoader" in loader["@model_loaders"]
         return loader
     except (KeyError, AssertionError):
+        return None
+
+
+def _get_piece_loader_config(
+    config: Dict[str, Any], transformer_name: str
+) -> Optional[Dict[str, Any]]:
+    try:
+        loader = config["initialize"]["components"][transformer_name]["piece_loader"]
+        return loader
+    except KeyError:
         return None
 
 
