@@ -100,3 +100,9 @@ def _check_roberta_base_encoder(encoding):
     ops.xp.testing.assert_array_equal(
         encoding[1].dataXd, [0, 5625, 52, 40, 3529, 181, 48344, 5749, 4, 2]
     )
+
+
+def test_uninitialized_bbpe_encoder(sample_docs):
+    encoder = build_byte_bpe_encoder_v1()
+    with pytest.raises(ValueError, match="not initialized"):
+        encoder.predict(sample_docs)

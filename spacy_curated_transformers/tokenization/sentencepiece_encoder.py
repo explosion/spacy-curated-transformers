@@ -47,7 +47,10 @@ def build_sentencepiece_encoder_v1() -> Tok2PiecesModelT:
     model: Tok2PiecesModelT = Model(
         "sentencepiece_encoder",
         forward=sentencepiece_encoder_forward,
-        attrs={"sentencepiece_processor": SentencePieceProcessor()},
+        attrs={
+            "sentencepiece_processor": SentencePieceProcessor(),
+            "initialized": False,
+        },
     )
     model.set_ref("encoder", model)
     return model
@@ -70,6 +73,11 @@ def build_xlmr_sentencepiece_encoder_v1() -> Tok2PiecesModelT:
 def sentencepiece_encoder_forward(
     model: Model, X: Tok2PiecesInT, is_train: bool
 ) -> Tuple[Tok2PiecesOutT, Tok2PiecesBackpropT]:
+    initialized: bool = model.attrs["initialized"]
+    if not initialized:
+        raise ValueError(
+            "SentencePiece piece encoder was not initialized with an appropriate loader"
+        )
     spp: SentencePieceProcessor = model.attrs["sentencepiece_processor"]
 
     pieces = []
@@ -114,6 +122,7 @@ def build_sentencepiece_encoder_loader_v1(
         model.attrs["sentencepiece_processor"] = SentencePieceProcessor.from_file(
             str(path)
         )
+        model.attrs["initialized"] = True
         return model
 
     return load

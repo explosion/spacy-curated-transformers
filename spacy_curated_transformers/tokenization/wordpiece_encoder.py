@@ -42,6 +42,7 @@ def build_bert_wordpiece_encoder_v1() -> Tok2PiecesModelT:
             "lowercase": False,
             "preprocess": _bert_preprocess,
             "strip_accents": False,
+            "initialized": False,
         },
     )
 
@@ -65,6 +66,7 @@ def build_wordpiece_encoder_v1() -> Tok2PiecesModelT:
             "lowercase": False,
             "preprocess": lambda t: [t],
             "strip_accents": False,
+            "initialized": False,
         },
     )
 
@@ -79,6 +81,13 @@ def wordpiece_encoder_forward(
     lowercase: bool = model.attrs["lowercase"]
     preprocess: Callable[[str], str] = model.attrs["preprocess"]
     strip_accents: bool = model.attrs["strip_accents"]
+
+    initialized: bool = model.attrs["initialized"]
+    if not initialized:
+        raise ValueError(
+            "WordPiece piece encoder was not initialized with an appropriate loader"
+        )
+
     bos_id = wpp.get_initial(bos_piece)
     eos_id = wpp.get_initial(eos_piece)
     unk_id = wpp.get_initial(unk_piece)
@@ -143,6 +152,7 @@ def build_wordpiece_encoder_loader_v1(
         model.attrs["unk_piece"] = unk_piece
         model.attrs["lowercase"] = lowercase
         model.attrs["strip_accents"] = strip_accents
+        model.attrs["initialized"] = True
         return model
 
     return load
