@@ -32,6 +32,7 @@ def toy_model(sentencepiece_toy_model_path):
 def toy_encoder(toy_model):
     encoder = build_xlmr_sentencepiece_encoder_v1()
     encoder.get_ref("encoder").attrs["sentencepiece_processor"] = toy_model
+    encoder.get_ref("encoder").attrs["initialized"] = True
     return encoder
 
 
