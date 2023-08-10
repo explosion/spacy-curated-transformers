@@ -35,7 +35,7 @@ def toy_model(sentencepiece_toy_model_path):
     return SentencePieceProcessor.from_file(sentencepiece_toy_model_path)
 
 
-# @pytest.mark.slow
+@pytest.mark.slow
 @pytest.mark.skipif(not has_hf_transformers, reason="requires huggingface transformers")
 @pytest.mark.parametrize("stride,window", [(2, 4), (96, 128)])
 @pytest.mark.parametrize("hf_model", [("xlm-roberta-base", 768, 250002)])
