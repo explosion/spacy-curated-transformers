@@ -11,8 +11,6 @@ from spacy.training import Example
 from spacy.training.initialize import init_nlp
 from spacy.training.loop import train
 from spacy.util import registry as spacy_registry
-from thinc.model import Model
-
 from spacy_curated_transformers._compat import has_hf_transformers, transformers
 from spacy_curated_transformers.models.architectures import (
     build_bert_transformer_model_v1,
@@ -30,7 +28,11 @@ from spacy_curated_transformers.models.listeners import (
 from spacy_curated_transformers.models.with_strided_spans import (
     build_with_strided_spans_v1,
 )
-from spacy_curated_transformers.pipeline.transformer import make_transformer
+from spacy_curated_transformers.pipeline.transformer import (
+    DEFAULT_CONFIG,
+    CuratedTransformer,
+    make_transformer,
+)
 from spacy_curated_transformers.tokenization import (
     build_bert_wordpiece_encoder_v1,
     build_byte_bpe_encoder_v1,
@@ -42,6 +44,8 @@ from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
     build_sentencepiece_encoder_loader_v1,
 )
 from spacy_curated_transformers.util import create_gradual_transformer_unfreezing
+
+from thinc.model import Model
 
 from ..util import make_tempdir, torch_assertclose, xp_assert_array_equal
 
@@ -681,3 +685,35 @@ def test_replace_listeners(cfg_string, listener_name, listener_entrypoint):
         tagger_tok2vec2 = tagger2.model.get_ref("tok2vec")
         pred_tensor = tagger_tok2vec2.predict([doc3])
         xp_assert_array_equal(doc_tensor_trained, pred_tensor)
+
+
+def test_transformer_add_pipe():
+    config = Config().from_str(cfg_string_last_layer_listener)
+    nlp = util.load_model_from_config(config, auto_fill=True, validate=True)
+    nlp.remove_pipe("transformer")
+
+    nlp = util.load_model_from_config(
+        Config().from_str(nlp.config.to_str()), auto_fill=True, validate=True
+    )
+    transformer = nlp.add_pipe("curated_transformer")
+    assert isinstance(transformer, CuratedTransformer)
+    assert (
+        nlp.config["components"]["curated_transformer"]["model"]["vocab_size"]
+        == DEFAULT_CONFIG["transformer"]["model"]["vocab_size"]
+    )
+    assert (
+        nlp.config["components"]["curated_transformer"]["model"]["@architectures"]
+        == DEFAULT_CONFIG["transformer"]["model"]["@architectures"]
+    )
+    assert (
+        nlp.config["components"]["curated_transformer"]["model"]["piece_encoder"][
+            "@architectures"
+        ]
+        == DEFAULT_CONFIG["transformer"]["model"]["piece_encoder"]["@architectures"]
+    )
+    assert (
+        nlp.config["components"]["curated_transformer"]["model"]["with_spans"][
+            "@architectures"
+        ]
+        == DEFAULT_CONFIG["transformer"]["model"]["with_spans"]["@architectures"]
+    )
