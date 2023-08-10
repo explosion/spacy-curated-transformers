@@ -237,7 +237,7 @@ def _load_hf_tokenizer(model_name: str, model_revision: str, msg: Printer) -> An
     from transformers import AutoTokenizer
 
     try:
-        hf_tokenzier = AutoTokenizer.from_pretrained(
+        hf_tokenizer = AutoTokenizer.from_pretrained(
             model_name, revision=model_revision
         )
 
@@ -247,19 +247,19 @@ def _load_hf_tokenizer(model_name: str, model_revision: str, msg: Printer) -> An
         # try to look up the correct value manually. If we don't find one, fallback
         # to a smaller (large) value that can be serialized correctly.
         # cf: https://github.com/huggingface/transformers/blob/224da5df6956340a5c680e5b57b4914d4d7298b6/src/transformers/tokenization_utils_base.py#L104
-        if hf_tokenzier.model_max_length == int(1e30):
-            hf_tokenzier.model_max_length = 9999
-            if getattr(hf_tokenzier, "max_model_input_sizes", None) is not None:
+        if hf_tokenizer.model_max_length == int(1e30):
+            hf_tokenizer.model_max_length = 9999
+            if getattr(hf_tokenizer, "max_model_input_sizes", None) is not None:
                 model_name_splits = model_name.split("/")
                 if len(model_name_splits) != 0:
                     model_name = model_name_splits[-1]
-                model_max_length = hf_tokenzier.max_model_input_sizes.get(model_name)
+                model_max_length = hf_tokenizer.max_model_input_sizes.get(model_name)
                 if model_max_length is not None:
-                    hf_tokenzier.model_max_length = model_max_length
+                    hf_tokenizer.model_max_length = model_max_length
     except BaseException as e:
         msg.fail(
             f"Couldn't load Hugging Face tokenizer '{model_name}' ('{model_revision}') - Error:\n{e}",
             exits=1,
         )
 
-    return hf_tokenzier
+    return hf_tokenizer
