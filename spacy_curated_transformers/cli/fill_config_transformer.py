@@ -128,7 +128,9 @@ def init_fill_config_transformer(
     if incoming_hf_model_type != hf_model_type:
         msg.fail(
             f"Hugging Face model of type '{incoming_hf_model_type}' cannot be loaded into "
-            f"Curated Transformer pipe '{transformer_name}' due to mismatching architectures",
+            f"Curated Transformer pipe '{transformer_name}' due to mismatching architectures. "
+            f"Make sure that the entrypoint used in 'components.{transformer_name}.model.@architectures' "
+            f"is compatible with the Hugging Face model '{model_name}'.",
             exits=1,
         )
 
