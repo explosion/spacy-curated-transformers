@@ -26,7 +26,7 @@ def init_fill_config_transformer_cli(
     base_path: Path = Arg(..., help="Path to the base config file to fill", exists=True, allow_dash=True, dir_okay=False),
     output_path: Path = Arg("-", help="Path to output .cfg file or '-' for stdout (default: stdout)", exists=False, allow_dash=True),
     model_name: Optional[str] = Opt(None, "--model-name", "-m", help="Name of the Hugging Face model. If not provided, the model name will be read in from the encoder loader config"),
-    model_revision: Optional[str] = Opt(None, "--model-revision", "-r", help="Revision of the Huggin Face model. Must be provided with the model name."),
+    model_revision: Optional[str] = Opt(None, "--model-revision", "-r", help="Revision of the Hugging Face model. Must be provided with the model name."),
     transformer_name: Optional[str] = Opt(None, "--pipe-name", "-n", help="Name of the transformer pipe whose config is to be filled (default: first transformer pipe)."),
     code_path: Optional[Path] = Opt(None, "--code-path", "--code", "-c", help="Path to Python file with additional code (registered functions) to be imported"),
     # fmt: on
@@ -185,7 +185,7 @@ def _resolve_model_source(
         cli_model_name is not None and cli_model_revision is None
     ):
         msg.fail(
-            "Either both model name and model revision are provided as command-line arguments or none of ther are",
+            "Either both model name and model revision are provided as command-line arguments or neither of them are",
             exits=1,
         )
 
