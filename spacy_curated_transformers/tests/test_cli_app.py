@@ -53,6 +53,7 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.0
 max_position_embeddings = 512
+model_max_length = 2147483647
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 0
@@ -104,6 +105,7 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.0
 max_position_embeddings = 512
+model_max_length = 2147483647
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 0
@@ -159,6 +161,7 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.00001
 max_position_embeddings = 512
+model_max_length = 2147483647
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 1
@@ -217,6 +220,7 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.00001
 max_position_embeddings = 512
+model_max_length = 2147483647
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 1
@@ -275,6 +279,7 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.00001
 max_position_embeddings = 512
+model_max_length = 2147483647
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 1
@@ -297,7 +302,7 @@ name = "explosion-testing/xlm-roberta-test"
 # fmt: on
 
 
-# @pytest.mark.slow
+@pytest.mark.slow
 @pytest.mark.skipif(not has_huggingface_hub, reason="requires Hugging Face Hub")
 @pytest.mark.skipif(
     not has_hf_transformers, reason="requires Hugging Face transformers"
@@ -334,11 +339,8 @@ def test_fill_config_transformer(config, output, extra_args):
 
         with open(output_path, "r", encoding="utf8") as f:
             all_lines = f.readlines()
-            # Remove the model_max_length key as its value is platform-dependent
-            valid_lines = [l for l in all_lines if "model_max_length" not in l]
-
             # Remove all whitespace and compare.
-            output_str = "".join(valid_lines)
+            output_str = "".join(all_lines)
             output_str = re.sub(r"\s*", "", output_str)
             expected_str = re.sub(r"\s*", "", output)
             assert output_str == expected_str
