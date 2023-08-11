@@ -26,7 +26,7 @@ def init_fill_config_transformer_cli(
     base_path: Path = Arg(..., help="Path to the base config file to fill", exists=True, allow_dash=True, dir_okay=False),
     output_path: Path = Arg("-", help="Path to output .cfg file or '-' for stdout (default: stdout)", exists=False, allow_dash=True),
     model_name: Optional[str] = Opt(None, "--model-name", "-m", help="Name of the Hugging Face model. If not provided, the model name will be read in from the encoder loader config"),
-    model_revision: Optional[str] = Opt(None, "--model-revision", "-r", help="Revision of the Hugging Face model. Must be provided with the model name."),
+    model_revision: Optional[str] = Opt(None, "--model-revision", "-r", help="Revision of the Hugging Face model (default: 'main')."),
     transformer_name: Optional[str] = Opt(None, "--pipe-name", "-n", help="Name of the transformer pipe whose config is to be filled (default: first transformer pipe)."),
     code_path: Optional[Path] = Opt(None, "--code-path", "--code", "-c", help="Path to Python file with additional code (registered functions) to be imported"),
     # fmt: on
@@ -175,22 +175,16 @@ def _resolve_model_source(
     cli_model_name: Optional[str],
     cli_model_revision: Optional[str],
 ) -> ModelSource:
-    if cli_model_name is None and cli_model_revision is None:
-        return ModelSource.Loader
-
-    if cli_model_name is not None and cli_model_revision is not None:
-        return ModelSource.CliArgument
-
-    if (cli_model_name is None and cli_model_revision is not None) or (
-        cli_model_name is not None and cli_model_revision is None
-    ):
+    if cli_model_name is None and cli_model_revision is not None:
         msg.fail(
-            "Either both model name and model revision are provided as command-line arguments or neither of them are",
+            "The model revision command-line argument must be accompanied by the model name argument",
             exits=1,
         )
 
-    # Unreachable; just to satisfy mypy.
-    return ModelSource.CliArgument
+    if cli_model_name is None:
+        return ModelSource.Loader
+    else:
+        return ModelSource.CliArgument
 
 
 def _resolve_curated_trf_pipe_name(
@@ -232,12 +226,16 @@ def _resolve_model_name_and_revision(
         loader_config = None
 
     if model_src == ModelSource.CliArgument:
-        assert cli_model_name is not None and cli_model_revision is not None
+        assert cli_model_name is not None
 
         model_name = cli_model_name
-        model_revision = cli_model_revision
+        model_revision = (
+            cli_model_revision if cli_model_revision is not None else "main"
+        )
+        if cli_model_revision is None:
+            msg.warn("Using default model revision")
         msg.info(
-            title="Using provided Hugging Face model name and revision:",
+            title=f"Using provided Hugging Face model name and {'default ' if cli_model_revision is None else ''}revision:",
             text=f"{model_name} ({model_revision})",
         )
     else:
