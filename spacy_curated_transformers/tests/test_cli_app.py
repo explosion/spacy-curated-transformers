@@ -31,11 +31,10 @@ factory = "curated_transformer"
 [initialize]
 [initialize.components]
 [initialize.components.transformer]
-[initialize.components.transformer.encoder_loader]
-@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-name = "explosion-testing/albert-test"
 [initialize.components.transformer.piece_loader]
 @model_loaders = "spacy-curated-transformers.ByteBpeLoader.v1"
+vocab_path = "/tmp/1"
+merges_path = "/tmp/2"
 """,
 
 """
@@ -64,11 +63,17 @@ num_hidden_groups = 1
 [initialize]
 [initialize.components]
 [initialize.components.transformer]
-piece_loader = {"@model_loaders":"spacy-curated-transformers.ByteBpeLoader.v1"}
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/albert-test"
+revision = "main"
+[initialize.components.transformer.piece_loader]
+@model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
+name = "explosion-testing/albert-test"
+revision = "main"
 """,
+
+["--model-name", "explosion-testing/albert-test", "--model-revision", "main"],
 ),
 
 (
@@ -81,12 +86,6 @@ pipeline = ["transformer"]
 factory = "curated_transformer"
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.BertTransformer.v1"
-[initialize]
-[initialize.components]
-[initialize.components.transformer]
-[initialize.components.transformer.encoder_loader]
-@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-name = "explosion-testing/bert-test"
 """,
 
 """
@@ -116,10 +115,14 @@ vocab_size = 1024
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/bert-test"
+revision = "main"
 [initialize.components.transformer.piece_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/bert-test"
+revision = "main"
 """,
+
+["--model-name", "explosion-testing/bert-test", "--model-revision", "main"],
 ),
 
 (
@@ -170,7 +173,10 @@ name = "explosion-testing/camembert-test"
 [initialize.components.transformer.piece_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/camembert-test"
+revision = "main"
 """,
+
+[],
 ),
 
 (
@@ -189,6 +195,10 @@ factory = "curated_transformer"
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/roberta-test"
+[initialize.components.transformer.piece_loader]
+@model_loaders = "spacy-curated-transformers.ByteBpeLoader.v1"
+vocab_path = "/tmp/1"
+merges_path = "/tmp/2"
 """,
 
 """
@@ -218,10 +228,14 @@ vocab_size = 1024
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/roberta-test"
+revision = "main"
 [initialize.components.transformer.piece_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/roberta-test"
+revision = "main"
 """,
+
+["--model-name", "explosion-testing/roberta-test", "--model-revision", "main"],
 ),
 
 (
@@ -242,7 +256,7 @@ factory = "curated_transformer"
 name = "explosion-testing/xlm-roberta-test"
 [initialize.components.transformer.piece_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
-name = "will-be-overwritten"
+name = "explosion-testing/xlm-roberta-test"
 """,
 
 """
@@ -276,18 +290,22 @@ name = "explosion-testing/xlm-roberta-test"
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/xlm-roberta-test"
 """,
+
+[],
 ),
 ]
 # fmt: on
 
 
-@pytest.mark.slow
+# @pytest.mark.slow
 @pytest.mark.skipif(not has_huggingface_hub, reason="requires Hugging Face Hub")
 @pytest.mark.skipif(
     not has_hf_transformers, reason="requires Hugging Face transformers"
 )
-@pytest.mark.parametrize("config, output", FILL_TRANSFORMER_CONFIG_STRS_AND_OUTPUTS)
-def test_fill_config_transformer(config, output):
+@pytest.mark.parametrize(
+    "config, output, extra_args", FILL_TRANSFORMER_CONFIG_STRS_AND_OUTPUTS
+)
+def test_fill_config_transformer(config, output, extra_args):
     with make_tempdir() as d:
         file_path = d / "test_conf"
         output_path = d / "output_conf"
@@ -301,7 +319,8 @@ def test_fill_config_transformer(config, output):
                 "fill-config-transformer",
                 str(file_path),
                 str(output_path),
-            ],
+            ]
+            + extra_args,
         )
         try:
             assert result.exit_code == 0

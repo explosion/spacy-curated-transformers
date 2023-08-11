@@ -2,8 +2,9 @@ import json
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
+from confection import Config
 from spacy import util
 from spacy.cli._util import import_code, init_cli, parse_config_overrides
 from spacy.cli.init_config import save_config
@@ -17,15 +18,17 @@ from .._compat import has_hf_transformers, has_huggingface_hub
 
 @init_cli.command(
     "fill-config-transformer",
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": False},
 )
 def init_fill_config_transformer_cli(
     # fmt: off
     ctx: Context,  # This is only used to read additional arguments
     base_path: Path = Arg(..., help="Path to the base config file to fill", exists=True, allow_dash=True, dir_okay=False),
     output_path: Path = Arg("-", help="Path to output .cfg file or '-' for stdout (default: stdout)", exists=False, allow_dash=True),
+    model_name: Optional[str] = Opt(None, "--model-name", "-m", help="Name of the Hugging Face model. If not provided, the model name will be read in from the encoder loader config"),
+    model_revision: Optional[str] = Opt(None, "--model-revision", "-r", help="Revision of the Huggin Face model. Must be provided with the model name."),
+    transformer_name: Optional[str] = Opt(None, "--pipe-name", "-n", help="Name of the transformer pipe whose config is to be filled (default: first transformer pipe)."),
     code_path: Optional[Path] = Opt(None, "--code-path", "--code", "-c", help="Path to Python file with additional code (registered functions) to be imported"),
-    transformer_name: Optional[str] = Opt(None, "--name", "-n", help="Name of the transformer pipe whose config is to be filled (default: first transformer pipe)."),
     # fmt: on
 ):
     """
@@ -34,14 +37,15 @@ def init_fill_config_transformer_cli(
 
     DOCS: https://spacy.io/api/cli#init-fill-config-transformer
     """
-
     overrides = parse_config_overrides(ctx.args)
     import_code(code_path)
     init_fill_config_transformer(
         base_path,
         output_path,
+        cli_model_name=model_name,
+        cli_model_revision=model_revision,
+        cli_transformer_name=transformer_name,
         config_overrides=overrides,
-        transformer_name=transformer_name,
     )
 
 
@@ -92,66 +96,33 @@ ENTRYPOINT_PARAMS_TO_HF_CONFIG_KEYS: Dict[str, str] = {
 }
 
 
+class ModelSource(Enum):
+    CliArgument = 1
+    Loader = 2
+
+
 def init_fill_config_transformer(
     config_path: Path,
     output_path: Path,
-    *,
-    config_overrides: Dict[str, Any] = {},
-    transformer_name: Optional[str] = None,
+    cli_model_name: Optional[str],
+    cli_model_revision: Optional[str],
+    cli_transformer_name: Optional[str],
+    config_overrides: Dict[str, Any],
 ):
     msg = Printer()
-    if not has_huggingface_hub or not has_hf_transformers:
-        msg.fail(
-            "This command requires the `huggingface-hub` and `transformers` packages to be installed",
-            exits=1,
-        )
+    _validate_hf_packages(msg)
+
     config = util.load_config(config_path, overrides=config_overrides)
-    if transformer_name is None:
-        components = config["components"]
-        transformers = [
-            name
-            for name, config in components.items()
-            if config["factory"] == "curated_transformer"
-        ]
-        if not transformers:
-            msg.fail(
-                "Pipeline config does not contain a Curated Transformer component",
-                exits=1,
-            )
-        transformer_name = transformers[0]
-    msg.info(f"Updating config for Curated Transformer pipe '{transformer_name}'")
 
-    loader_config = _get_encoder_loader_config(config, transformer_name)
-    if loader_config is None or loader_config.get("name") is None:  # type: ignore
-        msg.fail(
-            "Pipeline config does not have a valid model loader configuration "
-            f"for the '{transformer_name}' Curated Transformer component",
-            exits=1,
-        )
-    assert loader_config is not None
+    transformer_name = _resolve_curated_trf_pipe_name(msg, config, cli_transformer_name)
+    model_src = _resolve_model_source(msg, cli_model_name, cli_model_revision)
+    model_name, model_revision = _resolve_model_name_and_revision(
+        msg, config, model_src, cli_model_name, cli_model_revision, transformer_name
+    )
 
-    model_name = loader_config.get("name")
-    model_revision = loader_config.get("revision", "main")
-    assert model_name is not None and model_revision is not None
-
-    msg.info(f"Hugging Face model name: '{model_name}' | Revision: '{model_revision}'")
-
-    trf_arch = _get_curated_transformer_arch(config, transformer_name)
-    if trf_arch is None:
-        msg.fail(
-            f"Pipeline config does not have a valid model architecture for the '{transformer_name}' Curated Transformer component",
-            exits=1,
-        )
-    assert trf_arch is not None
-
-    hf_model_type = CURATED_TRANSFORMER_TO_HF_MODEL_TYPE.get(trf_arch)
-    if hf_model_type is None:
-        msg.fail(
-            f"Missing Hugging Face model type for Curated Transformer model architecture '{trf_arch}'",
-            exits=1,
-        )
-    assert hf_model_type is not None
-
+    hf_model_type = _lookup_hf_model_type_for_curated_architecture(
+        msg, config, transformer_name
+    )
     hf_config = _get_hf_model_config(model_name, model_revision)
     incoming_hf_model_type = hf_config["model_type"]
     if incoming_hf_model_type != hf_model_type:
@@ -165,6 +136,162 @@ def init_fill_config_transformer(
     params_to_fill.update(MODEL_SPECIFIC_ENTRYPOINT_PARAMS.get(hf_model_type, {}))
     hf_tokenizer = _load_hf_tokenizer(model_name, model_revision, msg)
 
+    filled_params = _fill_parameters(msg, params_to_fill, hf_config, hf_tokenizer)
+
+    # Update transformer model config with the filled params.
+    trf_config = config["components"][transformer_name]["model"]
+    trf_config.update(filled_params)
+
+    if model_src == ModelSource.CliArgument:
+        # Overwrite the encoder and piece loader configs.
+        _save_encoder_loader_config(
+            msg, config, transformer_name, model_name, model_revision
+        )
+        _save_piece_loader_config(
+            msg, config, transformer_name, model_name, model_revision, overwrite=True
+        )
+    else:
+        # Only fill in the piece loader config if it's not present.
+        _save_piece_loader_config(
+            msg, config, transformer_name, model_name, model_revision, overwrite=False
+        )
+
+    is_stdout = str(output_path) == "-"
+    if is_stdout:
+        msg.info(title="\n\nOutput:")
+    save_config(config, output_path, is_stdout=is_stdout, silent=is_stdout)
+
+
+def _validate_hf_packages(msg: Printer):
+    if not has_huggingface_hub or not has_hf_transformers:
+        msg.fail(
+            "This command requires the `huggingface-hub` and `transformers` packages to be installed",
+            exits=1,
+        )
+
+
+def _resolve_model_source(
+    msg: Printer,
+    cli_model_name: Optional[str],
+    cli_model_revision: Optional[str],
+) -> ModelSource:
+    if cli_model_name is None and cli_model_revision is None:
+        return ModelSource.Loader
+
+    if cli_model_name is not None and cli_model_revision is not None:
+        return ModelSource.CliArgument
+
+    if (cli_model_name is None and cli_model_revision is not None) or (
+        cli_model_name is not None and cli_model_revision is None
+    ):
+        msg.fail(
+            "Either both model name and model revision are provided as command-line arguments or none of ther are",
+            exits=1,
+        )
+
+    # Unreachable; just to satisfy mypy.
+    return ModelSource.CliArgument
+
+
+def _resolve_curated_trf_pipe_name(
+    msg: Printer, config: Config, cli_transformer_name: Optional[str]
+) -> str:
+    if cli_transformer_name is None:
+        components = config["components"]
+        transformers = [
+            name
+            for name, config in components.items()
+            if config["factory"] == "curated_transformer"
+        ]
+        if not transformers:
+            msg.fail(
+                "Pipeline config does not contain a Curated Transformer component",
+                exits=1,
+            )
+        transformer_name = transformers[0]
+    else:
+        transformer_name = cli_transformer_name
+    msg.info(f"Updating config for Curated Transformer pipe '{transformer_name}'")
+    return transformer_name
+
+
+def _resolve_model_name_and_revision(
+    msg: Printer,
+    config: Config,
+    model_src: ModelSource,
+    cli_model_name: Optional[str],
+    cli_model_revision: Optional[str],
+    transformer_name: str,
+) -> Tuple[str, str]:
+    try:
+        loader_config = config["initialize"]["components"][transformer_name][
+            "encoder_loader"
+        ]
+        assert "HFTransformerEncoderLoader" in loader_config["@model_loaders"]
+    except (KeyError, AssertionError):
+        loader_config = None
+
+    if model_src == ModelSource.CliArgument:
+        assert cli_model_name is not None and cli_model_revision is not None
+
+        model_name = cli_model_name
+        model_revision = cli_model_revision
+        msg.info(
+            title="Using provided Hugging Face model name and revision:",
+            text=f"{model_name} ({model_revision})",
+        )
+    else:
+        msg.info(f"Looking up Hugging Face model name and revision in loader config...")
+        if loader_config is None or loader_config.get("name") is None:  # type: ignore
+            msg.fail(
+                "Pipeline config does not have a valid model loader configuration "
+                f"for the '{transformer_name}' Curated Transformer component",
+                exits=1,
+            )
+        assert loader_config is not None
+
+        model_name = loader_config["name"]
+        model_revision = loader_config.get("revision", "main")
+        msg.info(
+            title="Using loader Hugging Face model name and revision:",
+            text=f"{model_name} ({model_revision})",
+        )
+
+    return model_name, model_revision
+
+
+def _lookup_hf_model_type_for_curated_architecture(
+    msg: Printer, config: Config, transformer_name: str
+) -> str:
+    try:
+        transformer = config["components"][transformer_name]["model"]
+        trf_arch_splits = transformer["@architectures"].split(".")
+        assert len(trf_arch_splits) == 3 and trf_arch_splits[-2].endswith("Transformer")
+        curated_arch = trf_arch_splits[-2]
+    except (KeyError, AssertionError):
+        msg.fail(
+            "Pipeline config does not have a valid model architecture for "
+            f"the '{transformer_name}' Curated Transformer component",
+            exits=1,
+        )
+
+    hf_model_type = CURATED_TRANSFORMER_TO_HF_MODEL_TYPE.get(curated_arch)
+    if hf_model_type is None:
+        msg.fail(
+            "Missing Hugging Face model type for Curated Transformer "
+            f"model architecture '{curated_arch}'",
+            exits=1,
+        )
+    assert hf_model_type is not None
+    return hf_model_type
+
+
+def _fill_parameters(
+    msg: Printer,
+    params_to_fill: Dict[str, HfParamSource],
+    hf_config: Dict[str, Any],
+    hf_tokenizer: Any,
+) -> Dict[str, Any]:
     filled_params = {}
     for param_name, source in params_to_fill.items():
         hf_key = ENTRYPOINT_PARAMS_TO_HF_CONFIG_KEYS.get(param_name, param_name)
@@ -186,38 +313,82 @@ def init_fill_config_transformer(
     msg.info(title="Filled-in model parameters:")
     msg.table(filled_params)
 
-    trf_config = config["components"][transformer_name]["model"]
-    trf_config.update(filled_params)
+    return filled_params
 
-    piece_loader = _get_piece_loader_config(config, transformer_name)
-    if piece_loader is None:
-        trf_init = config["initialize"]["components"][transformer_name]
-        trf_init["piece_loader"] = {
+
+def _create_intermediate_configs(config: Config, dot_path: str):
+    splits = dot_path.split(".")
+    current = config
+    while splits:
+        name = splits[0]
+        if name not in current:
+            current[name] = {}
+        current = current[name]
+        splits = splits[1:]
+
+
+def _save_encoder_loader_config(
+    msg: Printer,
+    config: Config,
+    transformer_name: str,
+    model_name: str,
+    model_revision: str,
+):
+    _create_intermediate_configs(
+        config, f"initialize.components.{transformer_name}.encoder_loader"
+    )
+    inner = config["initialize"]["components"][transformer_name]["encoder_loader"]
+    if inner:
+        msg.warn(f"Overwriting transformer encoder loader config")
+        inner.clear()
+
+    inner.update(
+        {
+            "@model_loaders": "spacy-curated-transformers.HFTransformerEncoderLoader.v1",
+            "name": model_name,
+            "revision": model_revision,
+        }
+    )
+
+
+def _save_piece_loader_config(
+    msg: Printer,
+    config: Config,
+    transformer_name: str,
+    model_name: str,
+    model_revision: str,
+    *,
+    overwrite: bool,
+):
+    _create_intermediate_configs(
+        config, f"initialize.components.{transformer_name}.piece_loader"
+    )
+    inner = config["initialize"]["components"][transformer_name]["piece_loader"]
+    if inner:
+        if overwrite:
+            msg.warn(f"Overwriting piece encoder loader config")
+            inner.clear()
+        else:
+            arch = inner.get("@model_loaders")
+            if (
+                arch == "spacy-curated-transformers.HFPieceEncoderLoader.v1"
+                and inner["name"] == model_name
+                and inner.get("revision", "main") == model_revision
+            ):
+                return
+
+            msg.warn(
+                f"Existing piece encoder loader might not be compatible with model '{model_name}'"
+            )
+            return
+
+    inner.update(
+        {
             "@model_loaders": "spacy-curated-transformers.HFPieceEncoderLoader.v1",
             "name": model_name,
+            "revision": model_revision,
         }
-        if model_revision != "main":
-            trf_init["piece_loader"]["revision"] = model_revision
-    else:
-        arch = piece_loader["@model_loaders"]
-        if "HFPieceEncoderLoader" not in arch:
-            msg.warn(
-                f"Existing piece encoder loader '{arch}' might not be compatible with model '{model_name}'"
-            )
-        else:
-            name = piece_loader["name"]
-            if name != model_name:
-                msg.warn(
-                    f"Overwriting piece encoder loader model ('{name}') with '{model_name}'"
-                )
-                piece_loader["name"] = model_name
-                if model_revision != "main":
-                    piece_loader["revision"] = model_revision
-
-    is_stdout = str(output_path) == "-"
-    if is_stdout:
-        msg.info(title="Output:")
-    save_config(config, output_path, is_stdout=is_stdout, silent=is_stdout)
+    )
 
 
 def _get_hf_model_config(name: str, revision: str) -> Dict[str, Any]:
@@ -226,45 +397,9 @@ def _get_hf_model_config(name: str, revision: str) -> Dict[str, Any]:
     config_path = hf_hub_download(
         repo_id=name, filename="config.json", revision=revision
     )
-    return _parse_json_file(config_path)
 
-
-def _parse_json_file(path: str) -> Dict[str, Any]:
-    with open(path, encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         return json.load(f)
-
-
-def _get_encoder_loader_config(
-    config: Dict[str, Any], transformer_name: str
-) -> Optional[Dict[str, Any]]:
-    try:
-        loader = config["initialize"]["components"][transformer_name]["encoder_loader"]
-        assert "HFTransformerEncoderLoader" in loader["@model_loaders"]
-        return loader
-    except (KeyError, AssertionError):
-        return None
-
-
-def _get_piece_loader_config(
-    config: Dict[str, Any], transformer_name: str
-) -> Optional[Dict[str, Any]]:
-    try:
-        loader = config["initialize"]["components"][transformer_name]["piece_loader"]
-        return loader
-    except KeyError:
-        return None
-
-
-def _get_curated_transformer_arch(
-    config: Dict[str, Any], transformer_name: str
-) -> Optional[str]:
-    try:
-        transformer = config["components"][transformer_name]["model"]
-        trf_arch_splits = transformer["@architectures"].split(".")
-        assert len(trf_arch_splits) == 3 and trf_arch_splits[-2].endswith("Transformer")
-        return trf_arch_splits[-2]
-    except (KeyError, AssertionError):
-        return None
 
 
 def _load_hf_tokenizer(model_name: str, model_revision: str, msg: Printer) -> Any:
