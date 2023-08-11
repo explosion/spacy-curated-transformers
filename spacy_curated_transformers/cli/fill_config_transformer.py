@@ -421,7 +421,7 @@ def _load_hf_tokenizer(model_name: str, model_revision: str, msg: Printer) -> An
         # to a smaller (large) value that can be serialized correctly.
         # cf: https://github.com/huggingface/transformers/blob/224da5df6956340a5c680e5b57b4914d4d7298b6/src/transformers/tokenization_utils_base.py#L104
         if hf_tokenizer.model_max_length == int(1e30):
-            hf_tokenizer.model_max_length = sys.maxsize
+            hf_tokenizer.model_max_length = 2147483647
             if getattr(hf_tokenizer, "max_model_input_sizes", None) is not None:
                 model_name_splits = model_name.split("/")
                 if len(model_name_splits) != 0:
