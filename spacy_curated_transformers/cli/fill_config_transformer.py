@@ -243,7 +243,9 @@ def _resolve_model_name_and_revision(
         if loader_config is None or loader_config.get("name") is None:  # type: ignore
             msg.fail(
                 "Pipeline config does not have a valid model loader configuration "
-                f"for the '{transformer_name}' Curated Transformer component",
+                f"for the '{transformer_name}' Curated Transformer component. You can "
+                "provide the '--model-name' and '--model-revision' command-line "
+                "arguments to automatically fill in the loader configuration.",
                 exits=1,
             )
         assert loader_config is not None
