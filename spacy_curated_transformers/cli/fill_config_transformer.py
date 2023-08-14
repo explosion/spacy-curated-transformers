@@ -124,15 +124,7 @@ def init_fill_config_curated_transformer(
         msg, config, transformer_name
     )
     hf_config = _get_hf_model_config(model_name, model_revision)
-    incoming_hf_model_type = hf_config["model_type"]
-    if incoming_hf_model_type != hf_model_type:
-        msg.fail(
-            f"Hugging Face model of type '{incoming_hf_model_type}' cannot be loaded into "
-            f"Curated Transformer pipe '{transformer_name}' due to mismatching architectures. "
-            f"Make sure that the entrypoint used in 'components.{transformer_name}.model.@architectures' "
-            f"is compatible with the Hugging Face model '{model_name}'.",
-            exits=1,
-        )
+    _validate_hf_model_type(msg, hf_config, hf_model_type, transformer_name)
 
     params_to_fill = COMMON_ENTRYPOINT_PARAMS.copy()
     params_to_fill.update(MODEL_SPECIFIC_ENTRYPOINT_PARAMS.get(hf_model_type, {}))
@@ -286,6 +278,44 @@ def _lookup_hf_model_type_for_curated_architecture(
         )
     assert hf_model_type is not None
     return hf_model_type
+
+
+def _validate_hf_model_type(
+    msg: Printer,
+    hf_config: Dict[str, Any],
+    expected_model_type: str,
+    transformer_name: str,
+):
+    incoming_hf_model_type = hf_config["model_type"]
+    if incoming_hf_model_type != expected_model_type:
+        error_msg = (
+            f"Hugging Face model of type '{incoming_hf_model_type}' cannot be loaded into "
+            f"Curated Transformer pipe '{transformer_name}' - "
+        )
+        hf_model_type_to_curated_arch = {
+            v: k for k, v in CURATED_TRANSFORMER_TO_HF_MODEL_TYPE.items()
+        }
+
+        if incoming_hf_model_type not in CURATED_TRANSFORMER_TO_HF_MODEL_TYPE.values():
+            error_msg += (
+                f"It is not supported by `spacy-curated-transformers`. The "
+                f"`{hf_model_type_to_curated_arch[expected_model_type]}` architecture "
+                f"expects a Hugging Face model of type '{expected_model_type}'"
+            )
+            msg.fail(
+                error_msg,
+                exits=1,
+            )
+        else:
+            expected_arch = hf_model_type_to_curated_arch[incoming_hf_model_type]
+            error_msg += (
+                f"Change the 'components.{transformer_name}.model.@architectures' entrypoint "
+                f"to use the '{expected_arch}' architecture."
+            )
+            msg.fail(
+                error_msg,
+                exits=1,
+            )
 
 
 def _fill_parameters(
