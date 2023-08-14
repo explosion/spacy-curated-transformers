@@ -1,12 +1,11 @@
 import re
 
 import pytest
-from spacy.cli import app
-from typer.testing import CliRunner
-
 import spacy_curated_transformers.cli.debug_pieces
 import spacy_curated_transformers.cli.fill_config_transformer
+from spacy.cli import app
 from spacy_curated_transformers._compat import has_hf_transformers, has_huggingface_hub
+from typer.testing import CliRunner
 
 from .util import make_tempdir
 
@@ -321,7 +320,7 @@ def test_fill_config_transformer(config, output, extra_args):
             app,
             [
                 "init",
-                "fill-config-transformer",
+                "fill-curated-transformer",
                 str(file_path),
                 str(output_path),
             ]
