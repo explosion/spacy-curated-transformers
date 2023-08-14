@@ -17,10 +17,10 @@ from .._compat import has_hf_transformers, has_huggingface_hub
 
 
 @init_cli.command(
-    "fill-config-transformer",
+    "fill-curated-transformer",
     context_settings={"allow_extra_args": True, "ignore_unknown_options": False},
 )
-def init_fill_config_transformer_cli(
+def init_fill_curated_transformer_cli(
     # fmt: off
     ctx: Context,  # This is only used to read additional arguments
     base_path: Path = Arg(..., help="Path to the base config file to fill", exists=True, allow_dash=True, dir_okay=False),
@@ -35,11 +35,11 @@ def init_fill_config_transformer_cli(
     Fetches the hyperparameters of a Curated Transformer model
     from the Hugging Face Hub and fills in the config with them.
 
-    DOCS: https://spacy.io/api/cli#init-fill-config-transformer
+    DOCS: https://spacy.io/api/cli#init-fill-curated-transformer
     """
     overrides = parse_config_overrides(ctx.args)
     import_code(code_path)
-    init_fill_config_transformer(
+    init_fill_config_curated_transformer(
         base_path,
         output_path,
         cli_model_name=model_name,
@@ -101,7 +101,7 @@ class ModelSource(Enum):
     Loader = 2
 
 
-def init_fill_config_transformer(
+def init_fill_config_curated_transformer(
     config_path: Path,
     output_path: Path,
     cli_model_name: Optional[str],
