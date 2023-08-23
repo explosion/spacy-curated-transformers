@@ -31,6 +31,7 @@ DEFAULT_CONFIG_STR = """
 
     [transformer.model]
     @architectures = "spacy-curated-transformers.XlmrTransformer.v1"
+    vocab_size = 250002
 
     [transformer.model.piece_encoder]
     @architectures = "spacy-curated-transformers.XlmrSentencepieceEncoder.v1"
