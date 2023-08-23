@@ -226,7 +226,7 @@ def _check_toy_encoder(encoding):
     )
 
 
-def test_uninitialized_wordpeice_encoder(sample_docs):
+def test_uninitialized_wordpiece_encoder(sample_docs):
     encoder = build_wordpiece_encoder_v1()
     with pytest.raises(ValueError, match="not initialized"):
         encoder.predict(sample_docs)
