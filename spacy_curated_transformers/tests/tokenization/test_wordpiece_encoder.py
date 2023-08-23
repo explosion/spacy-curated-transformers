@@ -224,3 +224,13 @@ def _check_toy_encoder(encoding):
         encoding[1].dataXd,
         [2, 824, 98, 189, 311, 417, 65, 155, 503, 99, 1, 416, 117, 88, 17, 3],
     )
+
+
+def test_uninitialized_wordpiece_encoder(sample_docs):
+    encoder = build_wordpiece_encoder_v1()
+    with pytest.raises(ValueError, match="not initialized"):
+        encoder.predict(sample_docs)
+
+    encoder = build_bert_wordpiece_encoder_v1()
+    with pytest.raises(ValueError, match="not initialized"):
+        encoder.predict(sample_docs)

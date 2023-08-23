@@ -80,3 +80,9 @@ def _check_toy_encoder(encoding):
         encoding[1].dataXd,
         [1, 483, 546, 112, 171, 567, 62, 20, 45, 0, 84, 115, 27, 7, 4, 2],
     )
+
+
+def test_uninitialized_sentencepiece_encoder(sample_docs):
+    encoder = build_sentencepiece_encoder_v1()
+    with pytest.raises(ValueError, match="not initialized"):
+        encoder.predict(sample_docs)

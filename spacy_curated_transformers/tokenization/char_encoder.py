@@ -28,6 +28,7 @@ def build_char_encoder_v1() -> Tok2PiecesModelT:
             "unk_piece": "[UNK]",
             "normalize": "NFKC",
             "vocab": None,
+            "initialized": False,
         },
     )
 
@@ -42,6 +43,11 @@ def char_encoder_forward(
     This model must be separately initialized using an appropriate
     loader.
     """
+    initialized: bool = model.attrs["initialized"]
+    if not initialized:
+        raise ValueError(
+            "Character piece encoder was not initialized with an appropriate loader"
+        )
     vocab: Optional[Dict[str, int]] = model.attrs["vocab"]
     if vocab is None:
         raise ValueError(
@@ -123,6 +129,7 @@ def build_char_encoder_loader_v1(
                     char = unicodedata.normalize(normalize, char)
                 vocab[char] = len(vocab)
         model.attrs["vocab"] = vocab
+        model.attrs["initialized"] = True
         return model
 
     return load

@@ -38,6 +38,7 @@ def build_byte_bpe_encoder_v1() -> Tok2PiecesModelT:
             "unk_piece": "<unk>",
             "bos_piece": "<s>",
             "eos_piece": "</s>",
+            "initialized": False,
         },
     )
 
@@ -49,6 +50,12 @@ def byte_bpe_encoder_forward(
     bos_piece: str = model.attrs["bos_piece"]
     eos_piece: str = model.attrs["eos_piece"]
     unk_piece: str = model.attrs["unk_piece"]
+    initialized: bool = model.attrs["initialized"]
+    if not initialized:
+        raise ValueError(
+            "Byte-BPE piece encoder was not initialized with an appropriate loader"
+        )
+
     bos_id = bbp.piece_id(bos_piece)
     if bos_id is None:
         raise ValueError(
@@ -116,6 +123,7 @@ def build_byte_bpe_encoder_loader_v1(
         model.attrs["byte_bpe_processor"] = ByteBPEProcessor.load_from_files(
             vocab=vocab_path, merges=merges_path
         )
+        model.attrs["initialized"] = True
         return model
 
     return load

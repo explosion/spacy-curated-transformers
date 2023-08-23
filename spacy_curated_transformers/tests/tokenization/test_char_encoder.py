@@ -111,3 +111,9 @@ def test_loader_rejects_incorrect_encoder(test_dir):
     encoder.init = build_char_encoder_loader_v1(path=test_dir / "toy-chars.txt")
     with pytest.raises(ValueError, match="incompatible model"):
         encoder.initialize()
+
+
+def test_uninitialized_char_encoder(sample_docs):
+    encoder = build_char_encoder_v1()
+    with pytest.raises(ValueError, match="not initialized"):
+        encoder.predict(sample_docs)

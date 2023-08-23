@@ -82,6 +82,7 @@ def _convert_byte_bpe_encoder(
     model.attrs["bos_piece"] = tokenizer.bos_token  # type: ignore
     model.attrs["eos_piece"] = tokenizer.eos_token  # type: ignore
     model.attrs["unk_piece"] = tokenizer.unk_token  # type: ignore
+    model.attrs["initialized"] = True
 
     return model
 
@@ -95,6 +96,8 @@ def _convert_sentencepiece_encoder(
     ] = SentencePieceProcessor.from_file(
         tokenizer.vocab_file  # type: ignore
     )
+    model.get_ref("encoder").attrs["initialized"] = True
+
     return model
 
 
@@ -120,6 +123,7 @@ def _convert_wordpiece_encoder(
     model.attrs["strip_accents"] = strip_accents or (
         strip_accents is not False and lowercase
     )
+    model.attrs["initialized"] = True
 
     return model
 
@@ -148,5 +152,6 @@ def _convert_bert_japanese_encoder(
         "NFKC" if tokenizer.subword_tokenizer.normalize_text else None
     )
     model.attrs["vocab"] = tokenizer.vocab.copy()
+    model.attrs["initialized"] = True
 
     return model
