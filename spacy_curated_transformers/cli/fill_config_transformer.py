@@ -289,7 +289,7 @@ def _validate_hf_model_type(
     if incoming_hf_model_type != expected_model_type:
         error_msg = (
             f"Hugging Face model of type '{incoming_hf_model_type}' cannot be loaded into "
-            f"Curated Transformer pipe '{transformer_name}' - "
+            f"Curated Transformer pipe '{transformer_name}' of type '{expected_model_type}' - "
         )
         hf_model_type_to_curated_arch = {
             v: k for k, v in CURATED_TRANSFORMER_TO_HF_MODEL_TYPE.items()
@@ -339,6 +339,7 @@ def _fill_parameters(
                     f"Hugging Face tokenizer config has a missing key '{hf_key}'",
                     exits=1,
                 )
+        assert value
         filled_params[param_name] = value
 
     msg.info(title="Filled-in model parameters:")
