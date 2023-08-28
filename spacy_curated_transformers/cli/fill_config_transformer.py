@@ -121,7 +121,7 @@ def init_fill_config_curated_transformer(
     hf_model_type = _lookup_hf_model_type_for_curated_architecture(
         msg, config, transformer_name
     )
-    hf_config = _get_hf_model_config(model_name, model_revision)
+    hf_config = _get_hf_model_config(msg, model_name, model_revision)
     _validate_hf_model_type(msg, hf_config, hf_model_type, transformer_name)
 
     params_to_fill = COMMON_ENTRYPOINT_PARAMS.copy()
@@ -422,12 +422,20 @@ def _save_piece_loader_config(
     )
 
 
-def _get_hf_model_config(name: str, revision: str) -> Dict[str, Any]:
+def _get_hf_model_config(msg: Printer, name: str, revision: str) -> Dict[str, Any]:
     from huggingface_hub import hf_hub_download
 
-    config_path = hf_hub_download(
-        repo_id=name, filename="config.json", revision=revision
-    )
+    try:
+        config_path = hf_hub_download(
+            repo_id=name, filename="config.json", revision=revision
+        )
+    except BaseException as e:
+        msg.fail(
+            f"Couldn't fetch the model configuration for model name '{name}' "
+            f"(revision: {revision}). Ensure that the model name and revision "
+            "are correct."
+        )
+        msg.fail(f"Exception: {e}", exits=1)
 
     with open(config_path, encoding="utf-8") as f:
         return json.load(f)
