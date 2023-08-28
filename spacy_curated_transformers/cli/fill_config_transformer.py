@@ -29,8 +29,7 @@ def init_fill_config_transformer_cli(
     # fmt: on
 ):
     """
-    Fetches the hyperparameters of a Curated Transformer model
-    from the Hugging Face Hub and fills in the config with them.
+    Fill Curated Transformer parameters from HF Hub.
 
     DOCS: https://spacy.io/api/cli#init-fill-config-transformer
     """
