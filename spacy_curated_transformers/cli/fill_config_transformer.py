@@ -56,6 +56,14 @@ CURATED_TRANSFORMER_TO_HF_MODEL_TYPE: Dict[str, str] = {
     "XlmrTransformer": "xlm-roberta",
 }
 
+HF_MODEL_TYPE_TO_EXAMPLE_MODELS: Dict[str, str] = {
+    "albert": "albert-base-v2",
+    "bert": "bert-base-cased",
+    "camembert": "camembert/camembert-base",
+    "roberta": "roberta-base",
+    "xlm-roberta": "xlm-roberta-base",
+}
+
 
 class HfParamSource(Enum):
     MODEL_CONFIG = 1
@@ -296,7 +304,7 @@ def _validate_hf_model_type(
                 f"Curated Transformer pipe '{transformer_name}' of type '{expected_model_type}' - "
                 "It is not supported by `spacy-curated-transformers`. The "
                 f"`{hf_model_type_to_curated_arch[expected_model_type]}` architecture "
-                f"expects a Hugging Face model of type '{expected_model_type}'",
+                f"expects a Hugging Face model of type '{expected_model_type}'.",
                 exits=1,
             )
         else:
@@ -305,7 +313,8 @@ def _validate_hf_model_type(
                 f"Hugging Face model of type '{incoming_hf_model_type}' cannot be loaded into "
                 f"Curated Transformer pipe '{transformer_name}' of type '{expected_model_type}' - "
                 f"Change the 'components.{transformer_name}.model.@architectures' entrypoint "
-                f"to use the '{expected_arch}' architecture.",
+                f"to use the '{expected_arch}' architecture. Alternatively, use a different "
+                f"model with the current architecuture, e.g: '{HF_MODEL_TYPE_TO_EXAMPLE_MODELS[expected_model_type]}'.",
                 exits=1,
             )
 
