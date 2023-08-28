@@ -47,6 +47,7 @@ factory = "curated_transformer"
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.AlbertTransformer.v1"
 attention_probs_dropout_prob = 0
+embedding_width = 128
 hidden_act = "gelu_new"
 hidden_dropout_prob = 0
 hidden_width = 32
@@ -55,12 +56,11 @@ layer_norm_eps = 0.0
 max_position_embeddings = 512
 model_max_length = 2147483647
 num_attention_heads = 4
+num_hidden_groups = 1
 num_hidden_layers = 5
 padding_idx = 0
 type_vocab_size = 16
 vocab_size = 1024
-embedding_width = 128
-num_hidden_groups = 1
 [initialize]
 [initialize.components]
 [initialize.components.transformer]

@@ -341,13 +341,13 @@ def _fill_parameters(
                     f"Hugging Face tokenizer config has a missing key '{hf_key}'",
                     exits=1,
                 )
-        assert value
+        assert value is not None
         filled_params[param_name] = value
 
     msg.info(title="Filled-in model parameters:")
     msg.table(filled_params)
 
-    return filled_params
+    return dict(sorted(filled_params.items(), key=lambda item: item[0]))
 
 
 def _create_intermediate_configs(config: Config, dot_path: str):
