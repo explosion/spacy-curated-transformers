@@ -67,7 +67,6 @@ COMMON_ENTRYPOINT_PARAMS: Dict[str, HfParamSource] = {
     "intermediate_width": HfParamSource.MODEL_CONFIG,
     "layer_norm_eps": HfParamSource.MODEL_CONFIG,
     "max_position_embeddings": HfParamSource.MODEL_CONFIG,
-    "model_max_length": HfParamSource.MODEL_CONFIG,
     "num_attention_heads": HfParamSource.MODEL_CONFIG,
     "num_hidden_layers": HfParamSource.MODEL_CONFIG,
     "padding_idx": HfParamSource.MODEL_CONFIG,
