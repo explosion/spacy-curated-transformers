@@ -31,11 +31,10 @@ factory = "curated_transformer"
 [initialize]
 [initialize.components]
 [initialize.components.transformer]
-[initialize.components.transformer.encoder_loader]
-@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-name = "explosion-testing/albert-test"
 [initialize.components.transformer.piece_loader]
 @model_loaders = "spacy-curated-transformers.ByteBpeLoader.v1"
+vocab_path = "/tmp/1"
+merges_path = "/tmp/2"
 """,
 
 """
@@ -54,6 +53,7 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.0
 max_position_embeddings = 512
+model_max_length = 2147483647
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 0
@@ -64,11 +64,17 @@ num_hidden_groups = 1
 [initialize]
 [initialize.components]
 [initialize.components.transformer]
-piece_loader = {"@model_loaders":"spacy-curated-transformers.ByteBpeLoader.v1"}
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/albert-test"
+revision = "main"
+[initialize.components.transformer.piece_loader]
+@model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
+name = "explosion-testing/albert-test"
+revision = "main"
 """,
+
+["--model-name", "explosion-testing/albert-test", "--model-revision", "main"],
 ),
 
 (
@@ -81,12 +87,6 @@ pipeline = ["transformer"]
 factory = "curated_transformer"
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.BertTransformer.v1"
-[initialize]
-[initialize.components]
-[initialize.components.transformer]
-[initialize.components.transformer.encoder_loader]
-@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-name = "explosion-testing/bert-test"
 """,
 
 """
@@ -105,6 +105,7 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.0
 max_position_embeddings = 512
+model_max_length = 2147483647
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 0
@@ -116,10 +117,14 @@ vocab_size = 1024
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/bert-test"
+revision = "main"
 [initialize.components.transformer.piece_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/bert-test"
+revision = "main"
 """,
+
+["--model-name", "explosion-testing/bert-test", "--model-revision", "main"],
 ),
 
 (
@@ -156,6 +161,7 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.00001
 max_position_embeddings = 512
+model_max_length = 2147483647
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 1
@@ -170,7 +176,10 @@ name = "explosion-testing/camembert-test"
 [initialize.components.transformer.piece_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/camembert-test"
+revision = "main"
 """,
+
+[],
 ),
 
 (
@@ -189,6 +198,10 @@ factory = "curated_transformer"
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/roberta-test"
+[initialize.components.transformer.piece_loader]
+@model_loaders = "spacy-curated-transformers.ByteBpeLoader.v1"
+vocab_path = "/tmp/1"
+merges_path = "/tmp/2"
 """,
 
 """
@@ -207,6 +220,7 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.00001
 max_position_embeddings = 512
+model_max_length = 2147483647
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 1
@@ -218,10 +232,14 @@ vocab_size = 1024
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/roberta-test"
+revision = "main"
 [initialize.components.transformer.piece_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/roberta-test"
+revision = "main"
 """,
+
+["--model-name", "explosion-testing/roberta-test", "--model-revision", "main"],
 ),
 
 (
@@ -242,7 +260,7 @@ factory = "curated_transformer"
 name = "explosion-testing/xlm-roberta-test"
 [initialize.components.transformer.piece_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
-name = "will-be-overwritten"
+name = "explosion-testing/xlm-roberta-test"
 """,
 
 """
@@ -261,6 +279,7 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.00001
 max_position_embeddings = 512
+model_max_length = 2147483647
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 1
@@ -276,6 +295,8 @@ name = "explosion-testing/xlm-roberta-test"
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/xlm-roberta-test"
 """,
+
+[],
 ),
 ]
 # fmt: on
@@ -286,8 +307,10 @@ name = "explosion-testing/xlm-roberta-test"
 @pytest.mark.skipif(
     not has_hf_transformers, reason="requires Hugging Face transformers"
 )
-@pytest.mark.parametrize("config, output", FILL_TRANSFORMER_CONFIG_STRS_AND_OUTPUTS)
-def test_fill_config_transformer(config, output):
+@pytest.mark.parametrize(
+    "config, output, extra_args", FILL_TRANSFORMER_CONFIG_STRS_AND_OUTPUTS
+)
+def test_fill_config_transformer(config, output, extra_args):
     with make_tempdir() as d:
         file_path = d / "test_conf"
         output_path = d / "output_conf"
@@ -298,10 +321,11 @@ def test_fill_config_transformer(config, output):
             app,
             [
                 "init",
-                "fill-config-transformer",
+                "fill-curated-transformer",
                 str(file_path),
                 str(output_path),
-            ],
+            ]
+            + extra_args,
         )
         try:
             assert result.exit_code == 0
@@ -315,11 +339,8 @@ def test_fill_config_transformer(config, output):
 
         with open(output_path, "r", encoding="utf8") as f:
             all_lines = f.readlines()
-            # Remove the model_max_length key as its value is platform-dependent
-            valid_lines = [l for l in all_lines if "model_max_length" not in l]
-
             # Remove all whitespace and compare.
-            output_str = "".join(valid_lines)
+            output_str = "".join(all_lines)
             output_str = re.sub(r"\s*", "", output_str)
             expected_str = re.sub(r"\s*", "", output)
             assert output_str == expected_str
