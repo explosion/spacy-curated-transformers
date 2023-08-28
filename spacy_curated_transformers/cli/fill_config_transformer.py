@@ -286,32 +286,26 @@ def _validate_hf_model_type(
 ):
     incoming_hf_model_type = hf_config["model_type"]
     if incoming_hf_model_type != expected_model_type:
-        error_msg = (
-            f"Hugging Face model of type '{incoming_hf_model_type}' cannot be loaded into "
-            f"Curated Transformer pipe '{transformer_name}' of type '{expected_model_type}' - "
-        )
         hf_model_type_to_curated_arch = {
             v: k for k, v in CURATED_TRANSFORMER_TO_HF_MODEL_TYPE.items()
         }
 
         if incoming_hf_model_type not in CURATED_TRANSFORMER_TO_HF_MODEL_TYPE.values():
-            error_msg += (
-                f"It is not supported by `spacy-curated-transformers`. The "
-                f"`{hf_model_type_to_curated_arch[expected_model_type]}` architecture "
-                f"expects a Hugging Face model of type '{expected_model_type}'"
-            )
             msg.fail(
-                error_msg,
+                f"Hugging Face model of type '{incoming_hf_model_type}' cannot be loaded into "
+                f"Curated Transformer pipe '{transformer_name}' of type '{expected_model_type}' - "
+                "It is not supported by `spacy-curated-transformers`. The "
+                f"`{hf_model_type_to_curated_arch[expected_model_type]}` architecture "
+                f"expects a Hugging Face model of type '{expected_model_type}'",
                 exits=1,
             )
         else:
             expected_arch = hf_model_type_to_curated_arch[incoming_hf_model_type]
-            error_msg += (
-                f"Change the 'components.{transformer_name}.model.@architectures' entrypoint "
-                f"to use the '{expected_arch}' architecture."
-            )
             msg.fail(
-                error_msg,
+                f"Hugging Face model of type '{incoming_hf_model_type}' cannot be loaded into "
+                f"Curated Transformer pipe '{transformer_name}' of type '{expected_model_type}' - "
+                f"Change the 'components.{transformer_name}.model.@architectures' entrypoint "
+                f"to use the '{expected_arch}' architecture.",
                 exits=1,
             )
 
