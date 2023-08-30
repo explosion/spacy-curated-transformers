@@ -43,7 +43,7 @@ An example project is provided in the [`project`](project) directory.
 - 📘
   [Layers and Model Architectures](https://spacy.io/usage/layers-architectures):
   Power spaCy components with custom neural networks
-- 📗 [`CuratedTransformer`](https://spacy.io/api/curated-transformer): Pipeline component API
+- 📗 [`CuratedTransformer`](https://spacy.io/api/curatedtransformer): Pipeline component API
   reference
 - 📗
   [Transformer architectures](https://spacy.io/api/architectures#curated-trf):
