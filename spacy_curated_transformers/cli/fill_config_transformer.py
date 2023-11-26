@@ -143,7 +143,7 @@ def init_fill_config_curated_transformer(
     trf_config.update(filled_params)
 
     if model_src == ModelSource.CliArgument:
-        # Overwrite the encoder and piece loader configs.
+        # Overwrite the encoder and piecer loader configs.
         _save_encoder_loader_config(
             msg, config, transformer_name, model_name, model_revision
         )
@@ -151,7 +151,7 @@ def init_fill_config_curated_transformer(
             msg, config, transformer_name, model_name, model_revision, overwrite=True
         )
     else:
-        # Only fill in the piece loader config if it's not present.
+        # Only fill in the piecer loader config if it's not present.
         _save_piecer_loader_config(
             msg, config, transformer_name, model_name, model_revision, overwrite=False
         )
