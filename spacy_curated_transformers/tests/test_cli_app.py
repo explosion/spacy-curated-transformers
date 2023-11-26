@@ -1,6 +1,7 @@
 import re
 
 import pytest
+import spacy
 from spacy.cli import app
 from typer.testing import CliRunner
 
@@ -344,3 +345,12 @@ def test_fill_config_transformer(config, output, extra_args):
             output_str = re.sub(r"\s*", "", output_str)
             expected_str = re.sub(r"\s*", "", output)
             assert output_str == expected_str
+
+
+@pytest.mark.parametrize(
+    "config", [output for _, output, _ in FILL_TRANSFORMER_CONFIG_STRS_AND_OUTPUTS]
+)
+def test_validate_test_filled_configs(config):
+    config = spacy.util.load_config_from_str(config, interpolate=True)
+    nlp = spacy.util.load_model_from_config(config, validate=True, auto_fill=True)
+    assert isinstance(nlp, spacy.language.Language)
