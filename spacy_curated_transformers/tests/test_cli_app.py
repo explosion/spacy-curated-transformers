@@ -31,7 +31,7 @@ factory = "curated_transformer"
 [initialize]
 [initialize.components]
 [initialize.components.transformer]
-[initialize.components.transformer.piece_loader]
+[initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.ByteBpeLoader.v1"
 vocab_path = "/tmp/1"
 merges_path = "/tmp/2"
@@ -68,7 +68,7 @@ vocab_size = 1024
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/albert-test"
 revision = "main"
-[initialize.components.transformer.piece_loader]
+[initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/albert-test"
 revision = "main"
@@ -118,7 +118,7 @@ vocab_size = 1024
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/bert-test"
 revision = "main"
-[initialize.components.transformer.piece_loader]
+[initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/bert-test"
 revision = "main"
@@ -173,7 +173,7 @@ vocab_size = 1024
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/camembert-test"
-[initialize.components.transformer.piece_loader]
+[initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/camembert-test"
 revision = "main"
@@ -198,7 +198,7 @@ factory = "curated_transformer"
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/roberta-test"
-[initialize.components.transformer.piece_loader]
+[initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.ByteBpeLoader.v1"
 vocab_path = "/tmp/1"
 merges_path = "/tmp/2"
@@ -233,7 +233,7 @@ vocab_size = 1024
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/roberta-test"
 revision = "main"
-[initialize.components.transformer.piece_loader]
+[initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/roberta-test"
 revision = "main"
@@ -258,7 +258,7 @@ factory = "curated_transformer"
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/xlm-roberta-test"
-[initialize.components.transformer.piece_loader]
+[initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/xlm-roberta-test"
 """,
@@ -291,7 +291,7 @@ vocab_size = 1024
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/xlm-roberta-test"
-[initialize.components.transformer.piece_loader]
+[initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/xlm-roberta-test"
 """,

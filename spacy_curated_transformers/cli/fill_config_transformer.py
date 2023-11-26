@@ -147,12 +147,12 @@ def init_fill_config_curated_transformer(
         _save_encoder_loader_config(
             msg, config, transformer_name, model_name, model_revision
         )
-        _save_piece_loader_config(
+        _save_piecer_loader_config(
             msg, config, transformer_name, model_name, model_revision, overwrite=True
         )
     else:
         # Only fill in the piece loader config if it's not present.
-        _save_piece_loader_config(
+        _save_piecer_loader_config(
             msg, config, transformer_name, model_name, model_revision, overwrite=False
         )
 
@@ -385,7 +385,7 @@ def _save_encoder_loader_config(
     )
 
 
-def _save_piece_loader_config(
+def _save_piecer_loader_config(
     msg: Printer,
     config: Config,
     transformer_name: str,
@@ -395,9 +395,9 @@ def _save_piece_loader_config(
     overwrite: bool,
 ):
     _create_intermediate_configs(
-        config, f"initialize.components.{transformer_name}.piece_loader"
+        config, f"initialize.components.{transformer_name}.piecer_loader"
     )
-    inner = config["initialize"]["components"][transformer_name]["piece_loader"]
+    inner = config["initialize"]["components"][transformer_name]["piecer_loader"]
     if inner:
         if overwrite:
             msg.warn(f"Overwriting piece encoder loader config")
