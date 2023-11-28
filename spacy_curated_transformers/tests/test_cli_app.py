@@ -330,9 +330,9 @@ def test_fill_config_transformer(config, output, extra_args):
                 raise ValueError(
                     f"Curated Transformer fill config failed! Stderr: \n{result.stderr}"
                 )
-        loaded_config = spacy.util.load_config(output_path)
+        filled_config = spacy.util.load_config(output_path)
         expected_config = spacy.util.load_config_from_str(output)
-        assert loaded_config == expected_config
+        assert filled_config == expected_config
 
 
 @pytest.mark.parametrize(
