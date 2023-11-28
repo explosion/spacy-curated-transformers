@@ -1,10 +1,11 @@
 from typing import Callable, List, Optional
+
+from curated_transformers.models.hf_util import convert_hf_pretrained_model_parameters
 from spacy.tokens import Doc
 
-from .._compat import transformers, has_hf_transformers
-from curated_transformers.models.hf_util import convert_hf_pretrained_model_parameters
-from .types import TorchTransformerModelT
+from .._compat import has_hf_transformers, transformers
 from ..errors import Errors
+from .types import TorchTransformerModelT
 
 
 def build_hf_transformer_encoder_loader_v1(

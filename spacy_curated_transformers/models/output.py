@@ -1,9 +1,9 @@
-from typing import List, Optional, TypeVar, Generic
 from dataclasses import dataclass
-import torch
-from torch import Tensor
+from typing import Generic, List, Optional, TypeVar
 
+import torch
 from thinc.types import Floats2d, Ragged
+from torch import Tensor
 
 from ..errors import Errors
 

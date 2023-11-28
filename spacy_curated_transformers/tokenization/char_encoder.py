@@ -1,10 +1,11 @@
-from typing import Callable, Dict, Optional, OrderedDict, Tuple
-from pathlib import Path
-from thinc.api import Model, Ragged
 import unicodedata
+from pathlib import Path
+from typing import Callable, Dict, Optional, OrderedDict, Tuple
 
-from .types import Tok2PiecesBackpropT, Tok2PiecesInT, Tok2PiecesModelT, Tok2PiecesOutT
+from thinc.api import Model, Ragged
+
 from ..errors import Errors
+from .types import Tok2PiecesBackpropT, Tok2PiecesInT, Tok2PiecesModelT, Tok2PiecesOutT
 
 
 def build_char_encoder_v1() -> Tok2PiecesModelT:
