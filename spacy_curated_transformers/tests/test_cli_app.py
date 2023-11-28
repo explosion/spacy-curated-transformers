@@ -335,6 +335,11 @@ def test_fill_config_transformer(config, output, extra_args):
         assert filled_config == expected_config
 
 
+@pytest.mark.slow
+@pytest.mark.skipif(not has_huggingface_hub, reason="requires Hugging Face Hub")
+@pytest.mark.skipif(
+    not has_hf_transformers, reason="requires Hugging Face transformers"
+)
 @pytest.mark.parametrize(
     "config", [output for _, output, _ in FILL_TRANSFORMER_CONFIG_STRS_AND_OUTPUTS]
 )
