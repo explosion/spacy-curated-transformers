@@ -340,7 +340,7 @@ class CuratedTransformer(TrainablePipe):
             The current nlp object.
         encoder_loader (Optional[Callable]):
             Initialization callback for the transformer model.
-        piece_loader (Optional[Callable]):
+        piecer_loader (Optional[Callable]):
             Initialization callback for the input piece encoder.
         """
         validate_get_examples(get_examples, "Transformer.initialize")
