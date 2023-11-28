@@ -19,65 +19,7 @@ def test_debug_pieces():
 
 # fmt: off
 FILL_TRANSFORMER_CONFIG_STRS_AND_OUTPUTS = [
-(
-"""
-[nlp]
-lang = "en"
-pipeline = ["transformer"]
-[components]
-[components.transformer]
-factory = "curated_transformer"
-[components.transformer.model]
-@architectures = "spacy-curated-transformers.AlbertTransformer.v1"
-[initialize]
-[initialize.components]
-[initialize.components.transformer]
-[initialize.components.transformer.piecer_loader]
-@model_loaders = "spacy-curated-transformers.ByteBpeLoader.v1"
-vocab_path = "/tmp/1"
-merges_path = "/tmp/2"
-""",
-
-"""
-[nlp]
-lang = "en"
-pipeline = ["transformer"]
-[components]
-[components.transformer]
-factory = "curated_transformer"
-[components.transformer.model]
-@architectures = "spacy-curated-transformers.AlbertTransformer.v1"
-attention_probs_dropout_prob = 0
-embedding_width = 128
-hidden_act = "gelu_new"
-hidden_dropout_prob = 0
-hidden_width = 32
-intermediate_width = 37
-layer_norm_eps = 0.0
-max_position_embeddings = 512
-model_max_length = 2147483647
-num_attention_heads = 4
-num_hidden_groups = 1
-num_hidden_layers = 5
-padding_idx = 0
-type_vocab_size = 16
-vocab_size = 1024
-[initialize]
-[initialize.components]
-[initialize.components.transformer]
-[initialize.components.transformer.encoder_loader]
-@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-name = "explosion-testing/albert-test"
-revision = "main"
-[initialize.components.transformer.piecer_loader]
-@model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
-name = "explosion-testing/albert-test"
-revision = "main"
-""",
-
-["--model-name", "explosion-testing/albert-test", "--model-revision", "main"],
-),
-
+# TODO: add albert testing model
 (
 """
 [nlp]
@@ -88,17 +30,25 @@ pipeline = ["transformer"]
 factory = "curated_transformer"
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.BertTransformer.v1"
+piece_encoder = {"@architectures":"spacy-curated-transformers.BertWordpieceEncoder.v1"}
+[components.transformer.model.with_spans]
+@architectures = "spacy-curated-transformers.WithStridedSpans.v1"
 """,
 
 """
 [nlp]
 lang = "en"
 pipeline = ["transformer"]
+
 [components]
+
 [components.transformer]
 factory = "curated_transformer"
+
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.BertTransformer.v1"
+piece_encoder = {"@architectures":"spacy-curated-transformers.BertWordpieceEncoder.v1"}
+with_spans = {"@architectures":"spacy-curated-transformers.WithStridedSpans.v1"}
 attention_probs_dropout_prob = 0.1
 hidden_act = "gelu"
 hidden_dropout_prob = 0.1
@@ -106,26 +56,31 @@ hidden_width = 32
 intermediate_width = 37
 layer_norm_eps = 0.0
 max_position_embeddings = 512
-model_max_length = 2147483647
+model_max_length = 512
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 0
 type_vocab_size = 16
-vocab_size = 1024
+vocab_size = 1124
+
 [initialize]
+
 [initialize.components]
+
 [initialize.components.transformer]
+
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-name = "explosion-testing/bert-test"
+name = "hf-internal-testing/tiny-random-bert"
 revision = "main"
+
 [initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
-name = "explosion-testing/bert-test"
+name = "hf-internal-testing/tiny-random-bert"
 revision = "main"
 """,
 
-["--model-name", "explosion-testing/bert-test", "--model-revision", "main"],
+["--model-name", "hf-internal-testing/tiny-random-bert", "--model-revision", "main"],
 ),
 
 (
@@ -138,49 +93,57 @@ pipeline = ["transformer"]
 factory = "curated_transformer"
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.CamembertTransformer.v1"
-[initialize]
-[initialize.components]
-[initialize.components.transformer]
-[initialize.components.transformer.encoder_loader]
-@model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-name = "explosion-testing/camembert-test"
+piece_encoder = {"@architectures":"spacy-curated-transformers.ByteBpeEncoder.v1"}
+[components.transformer.model.with_spans]
+@architectures = "spacy-curated-transformers.WithStridedSpans.v1"
 """,
 
 """
 [nlp]
 lang = "en"
 pipeline = ["transformer"]
+
 [components]
+
 [components.transformer]
 factory = "curated_transformer"
+
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.CamembertTransformer.v1"
+piece_encoder = {"@architectures":"spacy-curated-transformers.ByteBpeEncoder.v1"}
+with_spans = {"@architectures":"spacy-curated-transformers.WithStridedSpans.v1"}
 attention_probs_dropout_prob = 0.1
 hidden_act = "gelu"
 hidden_dropout_prob = 0.1
 hidden_width = 32
 intermediate_width = 37
-layer_norm_eps = 0.00001
+layer_norm_eps = 0.0
 max_position_embeddings = 512
-model_max_length = 2147483647
+model_max_length = 512
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 1
 type_vocab_size = 16
-vocab_size = 1024
+vocab_size = 1000
+
 [initialize]
+
 [initialize.components]
+
 [initialize.components.transformer]
+
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-name = "explosion-testing/camembert-test"
+name = "hf-internal-testing/tiny-random-camembert"
+revision = "main"
+
 [initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
-name = "explosion-testing/camembert-test"
+name = "hf-internal-testing/tiny-random-camembert"
 revision = "main"
 """,
 
-[],
+["--model-name", "hf-internal-testing/tiny-random-camembert", "--model-revision", "main"],
 ),
 
 (
@@ -193,12 +156,15 @@ pipeline = ["transformer"]
 factory = "curated_transformer"
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.RobertaTransformer.v1"
+piece_encoder = {"@architectures":"spacy-curated-transformers.ByteBpeEncoder.v1"}
+[components.transformer.model.with_spans]
+@architectures = "spacy-curated-transformers.WithStridedSpans.v1"
 [initialize]
 [initialize.components]
 [initialize.components.transformer]
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-name = "explosion-testing/roberta-test"
+name = "hf-internal-testing/tiny-random-roberta"
 [initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.ByteBpeLoader.v1"
 vocab_path = "/tmp/1"
@@ -209,38 +175,48 @@ merges_path = "/tmp/2"
 [nlp]
 lang = "en"
 pipeline = ["transformer"]
+
 [components]
+
 [components.transformer]
 factory = "curated_transformer"
+
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.RobertaTransformer.v1"
+piece_encoder = {"@architectures":"spacy-curated-transformers.ByteBpeEncoder.v1"}
+with_spans = {"@architectures":"spacy-curated-transformers.WithStridedSpans.v1"}
 attention_probs_dropout_prob = 0.1
 hidden_act = "gelu"
 hidden_dropout_prob = 0.1
 hidden_width = 32
 intermediate_width = 37
-layer_norm_eps = 0.00001
+layer_norm_eps = 0.0
 max_position_embeddings = 512
-model_max_length = 2147483647
+model_max_length = 512
 num_attention_heads = 4
 num_hidden_layers = 5
 padding_idx = 1
 type_vocab_size = 16
-vocab_size = 1024
+vocab_size = 1000
+
 [initialize]
+
 [initialize.components]
+
 [initialize.components.transformer]
+
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
-name = "explosion-testing/roberta-test"
+name = "hf-internal-testing/tiny-random-roberta"
 revision = "main"
+
 [initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
-name = "explosion-testing/roberta-test"
+name = "hf-internal-testing/tiny-random-roberta"
 revision = "main"
 """,
 
-["--model-name", "explosion-testing/roberta-test", "--model-revision", "main"],
+["--model-name", "hf-internal-testing/tiny-random-roberta", "--model-revision", "main"],
 ),
 
 (
@@ -253,24 +229,32 @@ pipeline = ["transformer"]
 factory = "curated_transformer"
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.XlmrTransformer.v1"
+piece_encoder = {"@architectures":"spacy-curated-transformers.XlmrSentencepieceEncoder.v1"}
+[components.transformer.model.with_spans]
+@architectures = "spacy-curated-transformers.WithStridedSpans.v1"
 [initialize]
 [initialize.components]
 [initialize.components.transformer]
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/xlm-roberta-test"
+revision = "main"
 [initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/xlm-roberta-test"
+revision = "main"
 """,
 
 """
 [nlp]
 lang = "en"
 pipeline = ["transformer"]
+
 [components]
+
 [components.transformer]
 factory = "curated_transformer"
+
 [components.transformer.model]
 @architectures = "spacy-curated-transformers.XlmrTransformer.v1"
 attention_probs_dropout_prob = 0.1
@@ -286,15 +270,24 @@ num_hidden_layers = 5
 padding_idx = 1
 type_vocab_size = 16
 vocab_size = 1024
+piece_encoder = {"@architectures":"spacy-curated-transformers.XlmrSentencepieceEncoder.v1"}
+with_spans = {"@architectures":"spacy-curated-transformers.WithStridedSpans.v1"}
+
 [initialize]
+
 [initialize.components]
+
 [initialize.components.transformer]
+
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "explosion-testing/xlm-roberta-test"
+revision = "main"
+
 [initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "explosion-testing/xlm-roberta-test"
+revision = "main"
 """,
 
 [],
@@ -337,14 +330,9 @@ def test_fill_config_transformer(config, output, extra_args):
                 raise ValueError(
                     f"Curated Transformer fill config failed! Stderr: \n{result.stderr}"
                 )
-
-        with open(output_path, "r", encoding="utf8") as f:
-            all_lines = f.readlines()
-            # Remove all whitespace and compare.
-            output_str = "".join(all_lines)
-            output_str = re.sub(r"\s*", "", output_str)
-            expected_str = re.sub(r"\s*", "", output)
-            assert output_str == expected_str
+        loaded_config = spacy.util.load_config(output_path)
+        expected_config = spacy.util.load_config_from_str(output)
+        assert loaded_config == expected_config
 
 
 @pytest.mark.parametrize(
@@ -353,4 +341,4 @@ def test_fill_config_transformer(config, output, extra_args):
 def test_validate_test_filled_configs(config):
     config = spacy.util.load_config_from_str(config, interpolate=True)
     nlp = spacy.util.load_model_from_config(config, validate=True, auto_fill=True)
-    assert isinstance(nlp, spacy.language.Language)
+    nlp.initialize()
