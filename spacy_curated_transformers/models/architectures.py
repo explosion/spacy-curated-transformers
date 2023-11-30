@@ -734,7 +734,8 @@ def _convert_inputs(
         span = X[i]
         span_len = span.shape[0]
         Xt[i, :span_len] = span
-    Xt = xp2torch(Xt)
+    device = model.shims[0].device
+    Xt = xp2torch(Xt, device=device)
 
     def convert_from_torch_backward(d_inputs: Any):
         # No gradients for the inputs.
