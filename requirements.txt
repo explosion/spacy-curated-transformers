@@ -1,7 +1,7 @@
 curated-transformers>=0.1.0,<0.2.0
 curated-tokenizers>=0.0.8,<0.1.0
-spacy>=3.7.0.dev0,<4.0.0
-thinc>=8.1.6,<9.1.0
+spacy>=4.0.0.dev1,<5.0.0
+thinc>=9.0.0.dev3,<9.1.0
 srsly
 torch>=1.12.0
 mypy>=0.990,<0.1000; platform_machine != "aarch64" and python_version >= "3.7"
