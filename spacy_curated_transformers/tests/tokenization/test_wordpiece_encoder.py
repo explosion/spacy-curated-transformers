@@ -48,6 +48,33 @@ def test_wordpiece_encoder_hf_model(sample_docs):
         [101, 3570, 1195, 1209, 3940, 185, 5926, 2744, 7329, 119, 102],
     )
 
+@pytest.mark.slow
+@pytest.mark.skipif(not has_hf_transformers, reason="requires huggingface transformers")
+def test_wordpiece_encoder_hf_model_w_electra(sample_docs):
+    ops = get_current_ops()
+    encoder = build_wordpiece_encoder_v1()
+    encoder.init = build_hf_piece_encoder_loader_v1(name="google/electra-small-discriminator")
+    encoder.initialize()
+
+    encoding = encoder.predict(sample_docs)
+
+    assert isinstance(encoding, list)
+    assert len(encoding) == 2
+
+    assert isinstance(encoding[0], Ragged)
+    ops.xp.testing.assert_array_equal(
+        encoding[0].lengths, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    )
+    ops.xp.testing.assert_array_equal(
+        encoding[0].dataXd, [101, 146, 1486, 170, 1873, 1114, 170, 16737, 119, 102]
+    )
+
+    ops.xp.testing.assert_array_equal(encoding[1].lengths, [1, 1, 1, 1, 1, 3, 1, 1, 1])
+    ops.xp.testing.assert_array_equal(
+        encoding[1].dataXd,
+        [101, 3570, 1195, 1209, 3940, 185, 5926, 2744, 7329, 119, 102],
+    )
+
 
 @pytest.mark.slow
 @pytest.mark.skipif(not has_hf_transformers, reason="requires huggingface transformers")
