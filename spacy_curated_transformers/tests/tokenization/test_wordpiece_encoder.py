@@ -48,12 +48,15 @@ def test_wordpiece_encoder_hf_model(sample_docs):
         [101, 3570, 1195, 1209, 3940, 185, 5926, 2744, 7329, 119, 102],
     )
 
+
 @pytest.mark.slow
 @pytest.mark.skipif(not has_hf_transformers, reason="requires huggingface transformers")
 def test_wordpiece_encoder_hf_model_w_electra(sample_docs):
     ops = get_current_ops()
     encoder = build_wordpiece_encoder_v1()
-    encoder.init = build_hf_piece_encoder_loader_v1(name="google/electra-small-discriminator")
+    encoder.init = build_hf_piece_encoder_loader_v1(
+        name="google/electra-small-discriminator"
+    )
     encoder.initialize()
 
     encoding = encoder.predict(sample_docs)
