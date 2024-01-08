@@ -1,5 +1,5 @@
 import json
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 from .._compat import has_hf_transformers, transformers
 from .bbpe_encoder import ByteBPEProcessor
@@ -18,7 +18,6 @@ if has_hf_transformers:
     )
 else:
     SUPPORTED_TOKENIZERS = ()  # type: ignore
-from typing import Union
 
 
 def build_hf_piece_encoder_loader_v1(
@@ -51,8 +50,8 @@ def build_hf_piece_encoder_loader_v1(
 def _convert_encoder(
     model: Tok2PiecesModelT, tokenizer: "transformers.PreTrainedTokenizerBase"
 ) -> Tok2PiecesModelT:
-    if isinstance(tokenizer, transformers.BertTokenizerFast) or isinstance(
-        tokenizer, transformers.ElectraTokenizerFast
+    if isinstance(
+        tokenizer, (transformers.BertTokenizerFast, transformers.ElectraTokenizerFast)
     ):
         return _convert_wordpiece_encoder(model, tokenizer)
     elif isinstance(tokenizer, transformers.RobertaTokenizerFast):
