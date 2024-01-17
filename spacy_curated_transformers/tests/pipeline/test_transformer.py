@@ -1,3 +1,4 @@
+import multiprocessing
 from functools import partial
 from typing import Any, Dict
 
@@ -48,6 +49,10 @@ from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
 from spacy_curated_transformers.util import create_gradual_transformer_unfreezing
 
 from ..util import make_tempdir, torch_assertclose, xp_assert_array_equal
+
+# Torch currently interacts badly with the fork method:
+# https://github.com/pytorch/pytorch/issues/17199
+multiprocessing.set_start_method("spawn")
 
 cfg_string_last_layer_listener = """
     # LastTransformerLayerListener
@@ -153,9 +158,10 @@ TRAIN_DATA = [
 ]
 
 
-def create_and_train_tagger(cfg_string):
+def create_tagger(cfg_string):
     config = Config().from_str(cfg_string)
     nlp = util.load_model_from_config(config, auto_fill=True, validate=True)
+
     tagger = nlp.get_pipe("tagger")
 
     train_examples = []
@@ -164,7 +170,19 @@ def create_and_train_tagger(cfg_string):
         for tag in t[1]["tags"]:
             tagger.add_label(tag)
 
-    optimizer = nlp.initialize(lambda: train_examples)
+    nlp.initialize(lambda: train_examples)
+
+    return nlp
+
+
+def create_and_train_tagger(cfg_string):
+    nlp = create_tagger(cfg_string)
+
+    train_examples = []
+    for t in TRAIN_DATA:
+        train_examples.append(Example.from_dict(nlp.make_doc(t[0]), t[1]))
+
+    optimizer = nlp.create_optimizer()
 
     for _ in range(10):
         losses = {}
@@ -193,6 +211,18 @@ def test_default_pipe_config_can_be_constructed():
 def test_tagger(cfg_string):
     model = create_and_train_tagger(cfg_string)
     evaluate_tagger_on_train_data(model)
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(not has_hf_transformers, reason="requires huggingface transformers")
+@pytest.mark.parametrize(
+    "cfg_string",
+    [cfg_string_last_layer_listener, cfg_string_scalar_weighting_layer_listener],
+)
+def test_tagger_multiprocessing(cfg_string):
+    model = create_tagger(cfg_string)
+    for _ in model.pipe(["This is a test..."] * 100, n_process=2):
+        pass
 
 
 def _hf_tokenize_per_token(tokenizer, docs, *, roberta=False):

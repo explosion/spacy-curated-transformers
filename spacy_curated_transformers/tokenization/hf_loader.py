@@ -19,6 +19,26 @@ else:
     SUPPORTED_TOKENIZERS = ()  # type: ignore
 
 
+class _HFPieceEncoderLoader:
+    """This was formerly an inline function. However, only proper objects
+    can be pickled."""
+
+    def __init__(self, *, name: str, revision: str):
+        self.name = name
+        self.revision = revision
+
+    def __call__(self, model, X=None, Y=None):
+        if not has_hf_transformers:
+            raise ValueError(
+                "`HFPieceEncoderLoader` requires the Hugging Face `transformers` package to be installed"
+            )
+
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            self.name, revision=self.revision
+        )
+        return _convert_encoder(model, tokenizer)
+
+
 def build_hf_piece_encoder_loader_v1(
     *, name: str, revision: str = "main"
 ) -> Callable[
@@ -33,17 +53,7 @@ def build_hf_piece_encoder_loader_v1(
     revision (str):
         Name of the model revision/branch.
     """
-
-    def load(model, X=None, Y=None):
-        if not has_hf_transformers:
-            raise ValueError(
-                "`HFPieceEncoderLoader` requires the Hugging Face `transformers` package to be installed"
-            )
-
-        tokenizer = transformers.AutoTokenizer.from_pretrained(name, revision=revision)
-        return _convert_encoder(model, tokenizer)
-
-    return load
+    return _HFPieceEncoderLoader(name=name, revision=revision)
 
 
 def _convert_encoder(
