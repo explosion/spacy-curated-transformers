@@ -107,7 +107,7 @@ def serialize_transformer_data(obj: DocTransformerOutput, chain=None):
     return obj if chain is None else chain(obj)
 
 
-@srsly.msgpack_decoders("doctransformeroutput")
+@srsly.msgpack_decoders("doc_transformer_output")
 def deserialize_transformer_data(obj, chain=None):
     if "__doc_transformer_output__" in obj:
         return DocTransformerOutput(all_outputs=[], last_layer_only=False).from_dict(
