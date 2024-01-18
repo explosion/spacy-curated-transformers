@@ -6,9 +6,11 @@ import numpy
 import pytest
 import spacy
 from thinc.api import CupyOps, get_current_ops
+from thinc.backends import get_array_ops
 import torch
 from spacy import Config, util
 from spacy.language import Language
+from spacy.tokens import Doc
 from spacy.training import Example
 from spacy.training.initialize import init_nlp
 from spacy.training.loop import train
@@ -513,10 +515,20 @@ def test_transformer_pipe_outputs():
     assert all([doc._.trf_data.last_layer_only for doc in docs]) == True
     assert all([len(doc._.trf_data.all_outputs) == 1 for doc in docs]) == True
 
+    serialized = [doc.to_bytes() for doc in docs]
+    deserialized = [Doc(nlp.vocab).from_bytes(doc_bytes) for doc_bytes in serialized]
+    for doc, doc_deserialized in zip(docs, deserialized):
+        _assert_doc_model_output_equal(doc, doc_deserialized)
+
     pipe = make_transformer(nlp, "transformer", model, all_layer_outputs=True)
     docs = list(pipe.pipe(docs))
     assert all([not doc._.trf_data.last_layer_only for doc in docs]) == True
     assert all([len(doc._.trf_data.all_outputs) == 12 + 1 for doc in docs]) == True
+
+    serialized = [doc.to_bytes() for doc in docs]
+    deserialized = [Doc(nlp.vocab).from_bytes(doc_bytes) for doc_bytes in serialized]
+    for doc, doc_deserialized in zip(docs, deserialized):
+        _assert_doc_model_output_equal(doc, doc_deserialized)
 
 
 cfg_string_gradual_unfreezing = (
@@ -752,3 +764,16 @@ def test_transformer_add_pipe():
         ]
         == DEFAULT_CONFIG["transformer"]["model"]["with_spans"]["@architectures"]
     )
+
+
+def _assert_doc_model_output_equal(doc1: Doc, doc2: Doc):
+    output1 = doc1._.trf_data
+    output2 = doc2._.trf_data
+
+    assert output1.last_layer_only == output2.last_layer_only
+    assert len(output1.all_outputs) == len(output2.all_outputs)
+
+    for layer1, layer2 in zip(output1.all_outputs, output2.all_outputs):
+        ops = get_array_ops(layer1.dataXd)
+        ops.xp.testing.assert_allclose(layer1.dataXd, layer2.dataXd)
+        ops.xp.testing.assert_array_equal(layer1.lengths, layer2.lengths)
