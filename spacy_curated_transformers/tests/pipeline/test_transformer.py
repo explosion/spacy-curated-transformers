@@ -5,6 +5,7 @@ from typing import Any, Dict
 import numpy
 import pytest
 import spacy
+from thinc.api import CupyOps, get_current_ops
 import torch
 from spacy import Config, util
 from spacy.language import Language
@@ -218,6 +219,10 @@ def test_tagger(cfg_string):
 @pytest.mark.parametrize(
     "cfg_string",
     [cfg_string_last_layer_listener, cfg_string_scalar_weighting_layer_listener],
+)
+@pytest.mark.skipif(
+    isinstance(get_current_ops(), CupyOps),
+    reason="multiprocessing and GPU support are incompatible",
 )
 def test_tagger_multiprocessing(cfg_string):
     model = create_tagger(cfg_string)
