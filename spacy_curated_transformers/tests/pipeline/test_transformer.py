@@ -5,8 +5,6 @@ from typing import Any, Dict
 import numpy
 import pytest
 import spacy
-from thinc.api import CupyOps, get_current_ops
-from thinc.backends import get_array_ops
 import torch
 from spacy import Config, util
 from spacy.language import Language
@@ -15,6 +13,8 @@ from spacy.training import Example
 from spacy.training.initialize import init_nlp
 from spacy.training.loop import train
 from spacy.util import registry as spacy_registry
+from thinc.api import CupyOps, get_current_ops
+from thinc.backends import get_array_ops
 from thinc.model import Model
 
 from spacy_curated_transformers._compat import has_hf_transformers, transformers
