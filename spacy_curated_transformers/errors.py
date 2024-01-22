@@ -49,5 +49,9 @@ class Errors(metaclass=ErrorsWithCodes):
             "('{pipe_name}'}. Only transformer pipes support this feature")
     E026 = ("Attempting to register a model ('{model_name}') with the transformer pipe"
             "that isn't a transformer listener")
+    E027 = ("Expected spacy_curated_transformers.models.output.DocTransformerOutput "
+            "in trf_data, got: {trf_data_type}\n"
+            "Check that your pipeline contains a curated_transformer component "
+            "with a spacy-curated-transformers model architecture.")
 
 # fmt: on

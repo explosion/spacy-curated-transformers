@@ -5,6 +5,8 @@ from spacy.tokens import Doc
 from thinc.api import Model
 from thinc.types import Ragged
 
+from ..errors import Errors
+from .output import DocTransformerOutput
 from .types import PoolingModelT, WithRaggedLastLayerModelT, WithRaggedLayersModelT
 
 
@@ -28,6 +30,11 @@ def with_ragged_layers_forward(
     doc_layer_counts = []
     doc_token_counts = []
     for X_doc in X:
+        if isinstance(X_doc, Doc):
+            if not isinstance(X_doc._.trf_data, DocTransformerOutput):
+                raise ValueError(
+                    Errors.E027.format(trf_data_type=type(X_doc._.trf_data))
+                )
         X_doc_layers = X_doc._.trf_data.all_outputs if isinstance(X_doc, Doc) else X_doc
         for X_layer in X_doc_layers:
             datas.append(X_layer.dataXd)
@@ -64,6 +71,11 @@ def with_ragged_layers_forward(
         for X_doc in X:
             dY_layer = []
 
+            if isinstance(X_doc, Doc):
+                if not isinstance(X_doc._.trf_data, DocTransformerOutput):
+                    raise ValueError(
+                        Errors.E027.format(trf_data_type=type(X_doc._.trf_data))
+                    )
             X_doc_layers = (
                 X_doc._.trf_data.all_outputs if isinstance(X_doc, Doc) else X_doc
             )
@@ -98,6 +110,11 @@ def with_ragged_last_layer_forward(
     lens = []
     doc_lens = []
     for X_doc in X:
+        if isinstance(X_doc, Doc):
+            if not isinstance(X_doc._.trf_data, DocTransformerOutput):
+                raise ValueError(
+                    Errors.E027.format(trf_data_type=type(X_doc._.trf_data))
+                )
         X_doc_layer = (
             X_doc._.trf_data.last_hidden_layer_state
             if isinstance(X_doc, Doc)
@@ -117,6 +134,11 @@ def with_ragged_last_layer_forward(
 
         dY = []
         for X_doc in X:
+            if isinstance(X_doc, Doc):
+                if not isinstance(X_doc._.trf_data, DocTransformerOutput):
+                    raise ValueError(
+                        Errors.E027.format(trf_data_type=type(X_doc._.trf_data))
+                    )
             X_doc_layer = (
                 X_doc._.trf_data.last_hidden_layer_states
                 if isinstance(X_doc, Doc)
