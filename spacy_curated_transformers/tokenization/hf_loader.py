@@ -19,9 +19,7 @@ else:
     SUPPORTED_TOKENIZERS = ()  # type: ignore
 
 
-def build_hf_piece_encoder_loader_v1(
-    *, name: str, revision: str = "main"
-) -> Callable[
+def build_hf_piece_encoder_loader_v1(*, name: str, revision: str = "main") -> Callable[
     [Tok2PiecesModelT, Optional[Tok2PiecesInT], Optional[Tok2PiecesInT]],
     Tok2PiecesModelT,
 ]:

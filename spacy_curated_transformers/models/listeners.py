@@ -536,9 +536,9 @@ class WrappedTransformerAndListener(WrappedTransformerAndListenerModelT):
         )
 
         # Ensure that the transformer returns the required outputs.
-        transformer.attrs[
-            "_all_layer_outputs"
-        ] = ListenerStateUtils.requires_all_layer_outputs(listener)
+        transformer.attrs["_all_layer_outputs"] = (
+            ListenerStateUtils.requires_all_layer_outputs(listener)
+        )
 
         # Freeze the embedded transformer if the source pipe was frozen.
         transformer.attrs["_frozen"] = frozen
