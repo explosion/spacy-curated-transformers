@@ -16,7 +16,7 @@ def transformer_discriminative(
     parameters and `default_schedule` for other parameters.
 
     default_schedule (Schedule): default schedule.
-    transformer_schedule (Schedule): schedule for transformer parmeters.
+    transformer_schedule (Schedule): schedule for transformer parameters.
     """
     return Schedule(
         "transfomer",
