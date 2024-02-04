@@ -97,9 +97,7 @@ def sentencepiece_encoder_forward(
     return pieces, lambda dY: []
 
 
-def build_sentencepiece_encoder_loader_v1(
-    *, path: Path
-) -> Callable[
+def build_sentencepiece_encoder_loader_v1(*, path: Path) -> Callable[
     [Tok2PiecesModelT, Optional[Tok2PiecesInT], Optional[Tok2PiecesInT]],
     Tok2PiecesModelT,
 ]:
