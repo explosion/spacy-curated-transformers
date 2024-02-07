@@ -58,6 +58,17 @@ def test_model_loaders_from_registry(loader_name):
 
 
 @pytest.mark.parametrize(
+    "schedule_name",
+    [
+        "spacy-curated-transformers.transformer_discriminative.v1",
+    ],
+)
+def test_schedule_from_registry(schedule_name):
+    # Can't be constructed, since most schedules have mandatory arguments.
+    registry.schedules.get(schedule_name)
+
+
+@pytest.mark.parametrize(
     "callback_name",
     [
         "spacy-curated-transformers.gradual_transformer_unfreezing.v1",

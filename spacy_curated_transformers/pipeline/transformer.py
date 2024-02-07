@@ -30,6 +30,7 @@ DEFAULT_CONFIG_STR = """
 
     [transformer.model]
     @architectures = "spacy-curated-transformers.XlmrTransformer.v1"
+    vocab_size = 250002
 
     [transformer.model.piece_encoder]
     @architectures = "spacy-curated-transformers.XlmrSentencepieceEncoder.v1"
@@ -339,7 +340,7 @@ class CuratedTransformer(TrainablePipe):
             The current nlp object.
         encoder_loader (Optional[Callable]):
             Initialization callback for the transformer model.
-        piece_loader (Optional[Callable]):
+        piecer_loader (Optional[Callable]):
             Initialization callback for the input piece encoder.
         """
         validate_get_examples(get_examples, "Transformer.initialize")

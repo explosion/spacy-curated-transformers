@@ -796,9 +796,7 @@ def _convert_outputs(
     return output, convert_for_torch_backward
 
 
-def build_pytorch_checkpoint_loader_v1(
-    *, path: Path
-) -> Callable[
+def build_pytorch_checkpoint_loader_v1(*, path: Path) -> Callable[
     [TorchTransformerModelT, Optional[List[Doc]], Optional[List[Doc]]],
     TorchTransformerModelT,
 ]:
