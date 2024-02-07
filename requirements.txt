@@ -1,5 +1,5 @@
 curated-transformers>=0.1.0,<0.2.0
-curated-tokenizers>=0.0.8,<0.1.0
+curated-tokenizers>=0.0.9,<0.1.0
 spacy>=4.0.0.dev2,<5.0.0
 thinc>=9.0.0.dev4,<9.1.0
 srsly
