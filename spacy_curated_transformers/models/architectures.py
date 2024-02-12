@@ -2,6 +2,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Callable, List, Optional, Tuple, Union, cast
 
+from fsspec.implementations.local import LocalFileSystem
 import torch
 from curated_transformers.layers import Activation, AttentionMask
 from curated_transformers.models import (
@@ -806,16 +807,35 @@ def build_pytorch_checkpoint_loader_v1(*, path: Path) -> Callable[
     path (Path):
         Path to the PyTorch checkpoint.
     """
+    return build_pytorch_checkpoint_loader_v2(path=path.parent)
+
+
+def build_pytorch_checkpoint_loader_v2(*, path: Path) -> Callable[
+    [TorchTransformerModelT, Optional[List[Doc]], Optional[List[Doc]]],
+    TorchTransformerModelT,
+]:
+    """Construct a callback that initializes a supported transformer
+    model with weights from a PyTorch or SafeTensors checkpoint.
+
+    path (Path):
+        Path to the directory containing the checkpoint.
+    """
 
     def load(model, X=None, Y=None):
         device = get_torch_default_device()
         encoder = model.shims[0]._model
         assert isinstance(encoder, FromHFHub)
+        from_fsspec = type(encoder).from_fsspec
 
-        params = torch.load(path, map_location=device)
-        params = encoder.convert_hf_state_dict(params)
-        encoder.load_state_dict(params)
-        encoder.to(device)
+        # We can discard the previously initialized model entirely
+        # and use the Curated Transformers API to load it from the
+        # hub.
+        model.shims[0]._model = None
+        del encoder
+
+        fs = LocalFileSystem()
+        encoder = from_fsspec(fs=fs, model_path=path, device=device)
+        model.shims[0]._model = encoder
         return model
 
     return load

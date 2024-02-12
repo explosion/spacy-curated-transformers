@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 from curated_tokenizers import SentencePieceProcessor
 from thinc.api import CupyOps, NumpyOps, Ragged, registry
@@ -172,5 +173,5 @@ def test_pytorch_checkpoint_loader(test_config):
     )
     model.get_ref("transformer").init = registry.model_loaders.get(
         "spacy-curated-transformers.PyTorchCheckpointLoader.v1"
-    )(path=checkpoint_path)
+    )(path=Path(checkpoint_path))
     model.initialize()
