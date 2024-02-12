@@ -1,9 +1,8 @@
 from typing import Callable, List, Optional
 
-from curated_transformers.models.hf_util import convert_hf_pretrained_model_parameters
+from curated_transformers.models import FromHFHub
 from spacy.tokens import Doc
 
-from .._compat import has_hf_transformers, transformers
 from .types import TorchTransformerModelT
 
 
@@ -25,17 +24,18 @@ def build_hf_transformer_encoder_loader_v1(
     """
 
     def load(model, X=None, Y=None):
-        if not has_hf_transformers:
-            raise ValueError(
-                "`HFTransformerEncoderLoader` requires the Hugging Face `transformers` package to be installed"
-            )
-
         encoder = model.shims[0]._model
+        assert isinstance(encoder, FromHFHub)
+        device = model.shims[0].device
+        from_hf_hub = type(encoder).from_hf_hub
 
-        hf_model = transformers.AutoModel.from_pretrained(name, revision=revision)
-        params = convert_hf_pretrained_model_parameters(hf_model)
-        encoder.load_state_dict(params)
-
+        # We can discard the previously initialized model entirely
+        # and use the Curated Transformers API to load it from the
+        # hub.
+        model.shims[0]._model = None
+        del encoder
+        encoder = from_hf_hub(name=name, revision=revision, device=device)
+        model.shims[0]._model = encoder
         return model
 
     return load
