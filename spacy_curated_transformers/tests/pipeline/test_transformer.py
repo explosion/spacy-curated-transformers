@@ -55,7 +55,10 @@ from ..util import make_tempdir, torch_assertclose, xp_assert_array_equal
 
 # Torch currently interacts badly with the fork method:
 # https://github.com/pytorch/pytorch/issues/17199
-multiprocessing.set_start_method("spawn")
+try:
+    multiprocessing.set_start_method("spawn")
+except RuntimeError:
+    pass
 
 cfg_string_last_layer_listener = """
     # LastTransformerLayerListener
