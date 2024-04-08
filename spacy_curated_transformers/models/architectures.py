@@ -2,7 +2,6 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Callable, List, Optional, Tuple, Union, cast
 
-from fsspec.implementations.local import LocalFileSystem
 import torch
 from curated_transformers.layers import Activation, AttentionMask
 from curated_transformers.models import (
@@ -18,6 +17,7 @@ from curated_transformers.models import (
     RoBERTaEncoder,
     XLMREncoder,
 )
+from fsspec.implementations.local import LocalFileSystem
 from spacy.tokens import Doc
 from spacy.util import SimpleFrozenDict
 from thinc.api import (

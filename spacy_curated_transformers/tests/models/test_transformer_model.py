@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import pytest
 from curated_tokenizers import SentencePieceProcessor
 from thinc.api import CupyOps, NumpyOps, Ragged, registry
