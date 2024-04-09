@@ -55,7 +55,11 @@ from ..util import make_tempdir, torch_assertclose, xp_assert_array_equal
 
 # Torch currently interacts badly with the fork method:
 # https://github.com/pytorch/pytorch/issues/17199
-multiprocessing.set_start_method("spawn")
+try:
+    multiprocessing.set_start_method("spawn")
+    MULTIPROCESSING_IS_SAFE = True
+except RuntimeError:
+    MULTIPROCESSING_IS_SAFE = multiprocessing.get_start_method() == "spawn"
 
 cfg_string_last_layer_listener = """
     # LastTransformerLayerListener
@@ -225,6 +229,10 @@ def test_tagger(cfg_string):
 @pytest.mark.skipif(
     isinstance(get_current_ops(), CupyOps),
     reason="multiprocessing and GPU support are incompatible",
+)
+@pytest.mark.skipif(
+    not MULTIPROCESSING_IS_SAFE,
+    reason=f"multiprocessing is not safe with start method {multiprocessing.get_start_method()}",
 )
 def test_tagger_multiprocessing(cfg_string):
     model = create_tagger(cfg_string)

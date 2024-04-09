@@ -3,7 +3,7 @@ name: Test
 on: [push, pull_request, workflow_call]
 
 env:
-  hf-transformers-pip: transformers[sentencepiece]>=3.4.0,<4.32.0
+  hf-transformers-pip: transformers[sentencepiece]>=4.39.0,<4.40.0
 
 jobs:
   validate:

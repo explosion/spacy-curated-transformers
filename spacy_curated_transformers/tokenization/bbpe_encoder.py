@@ -49,17 +49,17 @@ def byte_bpe_encoder_forward(
     bos_piece: str = model.attrs["bos_piece"]
     eos_piece: str = model.attrs["eos_piece"]
     unk_piece: str = model.attrs["unk_piece"]
-    bos_id = bbp.piece_id(bos_piece)
+    bos_id = bbp.piece_to_id(bos_piece)
     if bos_id is None:
         raise ValueError(
             "Byte-BPE piece encoder vocabulary doesn't contain 'BOS' piece"
         )
-    eos_id = bbp.piece_id(eos_piece)
+    eos_id = bbp.piece_to_id(eos_piece)
     if eos_id is None:
         raise ValueError(
             "Byte-BPE piece encoder vocabulary doesn't contain 'EOS' piece"
         )
-    unk_id = bbp.piece_id(unk_piece)
+    unk_id = bbp.piece_to_id(unk_piece)
     if unk_id is None:
         raise ValueError(
             "Byte-BPE piece encoder vocabulary doesn't contain 'UNK' piece"
