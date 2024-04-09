@@ -802,7 +802,7 @@ def build_pytorch_checkpoint_loader_v1(*, path: Path) -> Callable[
     TorchTransformerModelT,
 ]:
     """Construct a callback that initializes a supported transformer
-    model with weights from a PyTorch checkpoint.
+    model with weights from a PyTorch or SafeTensors checkpoint.
 
     path (Path):
         Path to the PyTorch checkpoint.
