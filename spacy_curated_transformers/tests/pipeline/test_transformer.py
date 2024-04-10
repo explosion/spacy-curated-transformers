@@ -454,6 +454,9 @@ def test_xlmr_transformer_pipe_against_hf():
         torch_assertclose(
             hf_doc_encoding[:encoding_len][1:-1],
             torch.tensor(doc._.trf_data.last_hidden_layer_state.dataXd),
+            # Up from 1e-5 to avoid a failure in XLM-R due very small compute
+            # differences. CPU passes with 1e-5.
+            atol=5e-5,
         )
 
 
