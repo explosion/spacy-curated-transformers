@@ -131,7 +131,111 @@ def build_albert_transformer_model_v1(
         Optional listener to wrap. Only used when replacing listeners
         in downstream components.
     """
+    return build_albert_transformer_model_v2(
+        vocab_size=vocab_size,
+        with_spans=with_spans,
+        piece_encoder=piece_encoder,
+        attention_probs_dropout_prob=attention_probs_dropout_prob,
+        embedding_width=embedding_width,
+        hidden_act=hidden_act,
+        hidden_dropout_prob=hidden_dropout_prob,
+        hidden_width=hidden_width,
+        intermediate_width=intermediate_width,
+        layer_norm_eps=layer_norm_eps,
+        max_position_embeddings=max_position_embeddings,
+        model_max_length=model_max_length,
+        num_attention_heads=num_attention_heads,
+        num_hidden_groups=num_hidden_groups,
+        num_hidden_layers=num_hidden_layers,
+        padding_idx=padding_idx,
+        type_vocab_size=type_vocab_size,
+        torchscript=torchscript,
+        mixed_precision=mixed_precision,
+        grad_scaler_config=grad_scaler_config,
+        wrapped_listener=wrapped_listener,
+    )
+
+
+def build_albert_transformer_model_v2(
+    *,
+    vocab_size: int,
+    with_spans: Callable[
+        [TorchTransformerModelT],
+        SpanExtractorModelT,
+    ],
+    piece_encoder: Tok2PiecesModelT,
+    attention_probs_dropout_prob: float = 0.0,
+    dtype: str = "float32",
+    embedding_width: int = 128,
+    hidden_act: str = "gelu_new",
+    hidden_dropout_prob: float = 0.0,
+    hidden_width: int = 768,
+    intermediate_width: int = 3072,
+    layer_norm_eps: float = 1e-12,
+    max_position_embeddings: int = 512,
+    model_max_length: int = 512,
+    num_attention_heads: int = 12,
+    num_hidden_groups: int = 1,
+    num_hidden_layers: int = 12,
+    padding_idx: int = 0,
+    type_vocab_size: int = 2,
+    torchscript: bool = False,
+    mixed_precision: bool = False,
+    grad_scaler_config: dict = SimpleFrozenDict(),
+    wrapped_listener: Optional[TransformerListenerModelT] = None,
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
+    """Construct an ALBERT transformer model.
+
+    vocab_size (int):
+        Vocabulary size.
+    with_spans (Callable):
+        Callback that constructs a span generator model.
+    piece_encoder (Model)
+        The piece encoder to segment input tokens.
+    attention_probs_dropout_prob (float):
+        Dropout probabilty of the self-attention layers.
+    dtype (str):
+        Torch parameter data type.
+    embedding_width (int):
+        Width of the embedding representations.
+    hidden_act (str):
+        Activation used by the point-wise feed-forward layers.
+    hidden_dropout_prob (float):
+        Dropout probabilty of the point-wise feed-forward and
+        embedding layers.
+    hidden_width (int):
+        Width of the final representations.
+    intermediate_width (int):
+        Width of the intermediate projection layer in the
+        point-wise feed-forward layer.
+    layer_norm_eps (float):
+        Epsilon for layer normalization.
+    max_position_embeddings (int):
+        Maximum length of position embeddings.
+    model_max_length (int):
+        Maximum length of model inputs.
+    num_attention_heads (int):
+        Number of self-attention heads.
+    num_hidden_groups (int):
+        Number of layer groups whose constituents share parameters.
+    num_hidden_layers (int):
+        Number of hidden layers.
+    padding_idx (int):
+        Index of the padding meta-token.
+    type_vocab_size (int):
+        Type vocabulary size.
+    torchscript (bool):
+        Set to `True` when loading TorchScript models, `False` otherwise.
+    mixed_precision (bool):
+        Use mixed-precision training.
+    grad_scaler_config (dict):
+        Configuration passed to the PyTorch gradient scaler.
+    wrapped_listener (Optional[TransformerListenerModelT]):
+        Optional listener to wrap. Only used when replacing listeners
+        in downstream components.
+    """
     config = ALBERTConfig(
+        dtype=_torch_dtype_from_str(dtype),
         embedding_width=embedding_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
@@ -240,7 +344,103 @@ def build_bert_transformer_model_v1(
         Optional listener to wrap. Only used when replacing listeners
         in downstream components.
     """
+    return build_bert_transformer_model_v2(
+        vocab_size=vocab_size,
+        with_spans=with_spans,
+        piece_encoder=piece_encoder,
+        attention_probs_dropout_prob=attention_probs_dropout_prob,
+        hidden_act=hidden_act,
+        hidden_dropout_prob=hidden_dropout_prob,
+        hidden_width=hidden_width,
+        intermediate_width=intermediate_width,
+        layer_norm_eps=layer_norm_eps,
+        max_position_embeddings=max_position_embeddings,
+        model_max_length=model_max_length,
+        num_attention_heads=num_attention_heads,
+        num_hidden_layers=num_hidden_layers,
+        padding_idx=padding_idx,
+        type_vocab_size=type_vocab_size,
+        torchscript=torchscript,
+        mixed_precision=mixed_precision,
+        grad_scaler_config=grad_scaler_config,
+        wrapped_listener=wrapped_listener,
+    )
+
+
+def build_bert_transformer_model_v2(
+    *,
+    vocab_size: int,
+    with_spans: Callable[
+        [TorchTransformerModelT],
+        SpanExtractorModelT,
+    ],
+    piece_encoder: Tok2PiecesModelT,
+    attention_probs_dropout_prob: float = 0.1,
+    dtype: str = "float32",
+    hidden_act: str = "gelu",
+    hidden_dropout_prob: float = 0.1,
+    hidden_width: int = 768,
+    intermediate_width: int = 3072,
+    layer_norm_eps: float = 1e-12,
+    max_position_embeddings: int = 512,
+    model_max_length: int = 512,
+    num_attention_heads: int = 12,
+    num_hidden_layers: int = 12,
+    padding_idx: int = 0,
+    type_vocab_size: int = 2,
+    torchscript: bool = False,
+    mixed_precision: bool = False,
+    grad_scaler_config: dict = SimpleFrozenDict(),
+    wrapped_listener: Optional[TransformerListenerModelT] = None,
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
+    """Construct a BERT transformer model.
+
+    vocab_size (int):
+        Vocabulary size.
+    with_spans (Callable):
+        Callback that constructs a span generator model.
+    piece_encoder (Model)
+        The piece encoder to segment input tokens.
+    attention_probs_dropout_prob (float):
+        Dropout probabilty of the self-attention layers.
+    dtype (str):
+        Data type of the model parameters.
+    hidden_act (str):
+        Activation used by the point-wise feed-forward layers.
+    hidden_dropout_prob (float):
+        Dropout probabilty of the point-wise feed-forward and
+        embedding layers.
+    hidden_width (int):
+        Width of the final representations.
+    intermediate_width (int):
+        Width of the intermediate projection layer in the
+        point-wise feed-forward layer.
+    layer_norm_eps (float):
+        Epsilon for layer normalization.
+    max_position_embeddings (int):
+        Maximum length of position embeddings.
+    model_max_length (int):
+        Maximum length of model inputs.
+    num_attention_heads (int):
+        Number of self-attention heads.
+    num_hidden_layers (int):
+        Number of hidden layers.
+    padding_idx (int):
+        Index of the padding meta-token.
+    type_vocab_size (int):
+        Type vocabulary size.
+    torchscript (bool):
+        Set to `True` when loading TorchScript models, `False` otherwise.
+    mixed_precision (bool):
+        Use mixed-precision training.
+    grad_scaler_config (dict):
+        Configuration passed to the PyTorch gradient scaler.
+    wrapped_listener (Optional[TransformerListenerModelT]):
+        Optional listener to wrap. Only used when replacing listeners
+        in downstream components.
+    """
     config = BERTConfig(
+        dtype=_torch_dtype_from_str(dtype),
         embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
@@ -348,7 +548,103 @@ def build_camembert_transformer_model_v1(
         Optional listener to wrap. Only used when replacing listeners
         in downstream components.
     """
+    return build_camembert_transformer_model_v2(
+        vocab_size=vocab_size,
+        with_spans=with_spans,
+        piece_encoder=piece_encoder,
+        attention_probs_dropout_prob=attention_probs_dropout_prob,
+        hidden_act=hidden_act,
+        hidden_dropout_prob=hidden_dropout_prob,
+        hidden_width=hidden_width,
+        intermediate_width=intermediate_width,
+        layer_norm_eps=layer_norm_eps,
+        max_position_embeddings=max_position_embeddings,
+        model_max_length=model_max_length,
+        num_attention_heads=num_attention_heads,
+        num_hidden_layers=num_hidden_layers,
+        padding_idx=padding_idx,
+        type_vocab_size=type_vocab_size,
+        mixed_precision=mixed_precision,
+        torchscript=torchscript,
+        grad_scaler_config=grad_scaler_config,
+        wrapped_listener=wrapped_listener,
+    )
+
+
+def build_camembert_transformer_model_v2(
+    *,
+    vocab_size: int,
+    with_spans: Callable[
+        [TorchTransformerModelT],
+        SpanExtractorModelT,
+    ],
+    piece_encoder: Tok2PiecesModelT,
+    attention_probs_dropout_prob: float = 0.1,
+    dtype: str = "float32",
+    hidden_act: str = "gelu",
+    hidden_dropout_prob: float = 0.1,
+    hidden_width: int = 768,
+    intermediate_width: int = 3072,
+    layer_norm_eps: float = 1e-5,
+    max_position_embeddings: int = 514,
+    model_max_length: int = 512,
+    num_attention_heads: int = 12,
+    num_hidden_layers: int = 12,
+    padding_idx: int = 1,
+    type_vocab_size: int = 1,
+    mixed_precision: bool = False,
+    torchscript=False,
+    grad_scaler_config: dict = SimpleFrozenDict(),
+    wrapped_listener: Optional[TransformerListenerModelT] = None,
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
+    """Construct a CamemBERT transformer model.
+
+    vocab_size (int):
+        Vocabulary size.
+    with_spans (Callable):
+        Callback that constructs a span generator model.
+    piece_encoder (Model)
+        The piece encoder to segment input tokens.
+    attention_probs_dropout_prob (float):
+        Dropout probabilty of the self-attention layers.
+    dtype (str):
+        Data type of the model parameters.
+    hidden_act (str):
+        Activation used by the point-wise feed-forward layers.
+    hidden_dropout_prob (float):
+        Dropout probabilty of the point-wise feed-forward and
+        embedding layers.
+    hidden_width (int):
+        Width of the final representations.
+    intermediate_width (int):
+        Width of the intermediate projection layer in the
+        point-wise feed-forward layer.
+    layer_norm_eps (float):
+        Epsilon for layer normalization.
+    max_position_embeddings (int):
+        Maximum length of position embeddings.
+    model_max_length (int):
+        Maximum length of model inputs.
+    num_attention_heads (int):
+        Number of self-attention heads.
+    num_hidden_layers (int):
+        Number of hidden layers.
+    padding_idx (int):
+        Index of the padding meta-token.
+    type_vocab_size (int):
+        Type vocabulary size.
+    torchscript (bool):
+        Set to `True` when loading TorchScript models, `False` otherwise.
+    mixed_precision (bool):
+        Use mixed-precision training.
+    grad_scaler_config (dict):
+        Configuration passed to the PyTorch gradient scaler.
+    wrapped_listener (Optional[TransformerListenerModelT]):
+        Optional listener to wrap. Only used when replacing listeners
+        in downstream components.
+    """
     config = RoBERTaConfig(
+        dtype=_torch_dtype_from_str(dtype),
         embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
@@ -456,7 +752,103 @@ def build_roberta_transformer_model_v1(
         Optional listener to wrap. Only used when replacing listeners
         in downstream components.
     """
+    return build_roberta_transformer_model_v2(
+        vocab_size=vocab_size,
+        with_spans=with_spans,
+        piece_encoder=piece_encoder,
+        attention_probs_dropout_prob=attention_probs_dropout_prob,
+        hidden_act=hidden_act,
+        hidden_dropout_prob=hidden_dropout_prob,
+        hidden_width=hidden_width,
+        intermediate_width=intermediate_width,
+        layer_norm_eps=layer_norm_eps,
+        max_position_embeddings=max_position_embeddings,
+        model_max_length=model_max_length,
+        num_attention_heads=num_attention_heads,
+        num_hidden_layers=num_hidden_layers,
+        padding_idx=padding_idx,
+        type_vocab_size=type_vocab_size,
+        torchscript=torchscript,
+        mixed_precision=mixed_precision,
+        grad_scaler_config=grad_scaler_config,
+        wrapped_listener=wrapped_listener,
+    )
+
+
+def build_roberta_transformer_model_v2(
+    *,
+    vocab_size: int,
+    with_spans: Callable[
+        [TorchTransformerModelT],
+        SpanExtractorModelT,
+    ],
+    piece_encoder: Tok2PiecesModelT,
+    attention_probs_dropout_prob: float = 0.1,
+    dtype: str = "float32",
+    hidden_act: str = "gelu",
+    hidden_dropout_prob: float = 0.1,
+    hidden_width: int = 768,
+    intermediate_width: int = 3072,
+    layer_norm_eps: float = 1e-5,
+    max_position_embeddings: int = 514,
+    model_max_length: int = 512,
+    num_attention_heads: int = 12,
+    num_hidden_layers: int = 12,
+    padding_idx: int = 1,
+    type_vocab_size: int = 1,
+    torchscript: bool = False,
+    mixed_precision: bool = False,
+    grad_scaler_config: dict = SimpleFrozenDict(),
+    wrapped_listener: Optional[TransformerListenerModelT] = None,
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
+    """Construct a RoBERTa transformer model.
+
+    vocab_size (int):
+        Vocabulary size.
+    with_spans (Callable):
+        Callback that constructs a span generator model.
+    piece_encoder (Model)
+        The piece encoder to segment input tokens.
+    attention_probs_dropout_prob (float):
+        Dropout probabilty of the self-attention layers.
+    dtype (str):
+        Data type of the model parameters.
+    hidden_act (str):
+        Activation used by the point-wise feed-forward layers.
+    hidden_dropout_prob (float):
+        Dropout probabilty of the point-wise feed-forward and
+        embedding layers.
+    hidden_width (int):
+        Width of the final representations.
+    intermediate_width (int):
+        Width of the intermediate projection layer in the
+        point-wise feed-forward layer.
+    layer_norm_eps (float):
+        Epsilon for layer normalization.
+    max_position_embeddings (int):
+        Maximum length of position embeddings.
+    model_max_length (int):
+        Maximum length of model inputs.
+    num_attention_heads (int):
+        Number of self-attention heads.
+    num_hidden_layers (int):
+        Number of hidden layers.
+    padding_idx (int):
+        Index of the padding meta-token.
+    type_vocab_size (int):
+        Type vocabulary size.
+    torchscript (bool):
+        Set to `True` when loading TorchScript models, `False` otherwise.
+    mixed_precision (bool):
+        Use mixed-precision training.
+    grad_scaler_config (dict):
+        Configuration passed to the PyTorch gradient scaler.
+    wrapped_listener (Optional[TransformerListenerModelT]):
+        Optional listener to wrap. Only used when replacing listeners
+        in downstream components.
+    """
     config = RoBERTaConfig(
+        dtype=_torch_dtype_from_str(dtype),
         embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
@@ -564,7 +956,103 @@ def build_xlmr_transformer_model_v1(
         Optional listener to wrap. Only used when replacing listeners
         in downstream components.
     """
+    return build_xlmr_transformer_model_v2(
+        vocab_size=vocab_size,
+        with_spans=with_spans,
+        piece_encoder=piece_encoder,
+        attention_probs_dropout_prob=attention_probs_dropout_prob,
+        hidden_act=hidden_act,
+        hidden_dropout_prob=hidden_dropout_prob,
+        hidden_width=hidden_width,
+        intermediate_width=intermediate_width,
+        layer_norm_eps=layer_norm_eps,
+        max_position_embeddings=max_position_embeddings,
+        model_max_length=model_max_length,
+        num_attention_heads=num_attention_heads,
+        num_hidden_layers=num_hidden_layers,
+        padding_idx=padding_idx,
+        type_vocab_size=type_vocab_size,
+        torchscript=torchscript,
+        mixed_precision=mixed_precision,
+        grad_scaler_config=grad_scaler_config,
+        wrapped_listener=wrapped_listener,
+    )
+
+
+def build_xlmr_transformer_model_v2(
+    *,
+    vocab_size: int,
+    with_spans: Callable[
+        [TorchTransformerModelT],
+        SpanExtractorModelT,
+    ],
+    piece_encoder: Tok2PiecesModelT,
+    attention_probs_dropout_prob: float = 0.1,
+    dtype: str = "float32",
+    hidden_act: str = "gelu",
+    hidden_dropout_prob: float = 0.1,
+    hidden_width: int = 768,
+    intermediate_width: int = 3072,
+    layer_norm_eps: float = 1e-5,
+    max_position_embeddings: int = 514,
+    model_max_length: int = 512,
+    num_attention_heads: int = 12,
+    num_hidden_layers: int = 12,
+    padding_idx: int = 1,
+    type_vocab_size: int = 1,
+    torchscript: bool = False,
+    mixed_precision: bool = False,
+    grad_scaler_config: dict = SimpleFrozenDict(),
+    wrapped_listener: Optional[TransformerListenerModelT] = None,
+) -> Union[TransformerModelT, WrappedTransformerAndListenerModelT]:
+    """Construct a XLM-RoBERTa transformer model.
+
+    vocab_size (int):
+        Vocabulary size.
+    with_spans (Callable):
+        Callback that constructs a span generator model.
+    piece_encoder (Model)
+        The piece encoder to segment input tokens.
+    attention_probs_dropout_prob (float):
+        Dropout probabilty of the self-attention layers.
+    dtype (str):
+        Data type of the model parameters.
+    hidden_act (str):
+        Activation used by the point-wise feed-forward layers.
+    hidden_dropout_prob (float):
+        Dropout probabilty of the point-wise feed-forward and
+        embedding layers.
+    hidden_width (int):
+        Width of the final representations.
+    intermediate_width (int):
+        Width of the intermediate projection layer in the
+        point-wise feed-forward layer.
+    layer_norm_eps (float):
+        Epsilon for layer normalization.
+    max_position_embeddings (int):
+        Maximum length of position embeddings.
+    model_max_length (int):
+        Maximum length of model inputs.
+    num_attention_heads (int):
+        Number of self-attention heads.
+    num_hidden_layers (int):
+        Number of hidden layers.
+    padding_idx (int):
+        Index of the padding meta-token.
+    type_vocab_size (int):
+        Type vocabulary size.
+    torchscript (bool):
+        Set to `True` when loading TorchScript models, `False` otherwise.
+    mixed_precision (bool):
+        Use mixed-precision training.
+    grad_scaler_config (dict):
+        Configuration passed to the PyTorch gradient scaler.
+    wrapped_listener (Optional[TransformerListenerModelT]):
+        Optional listener to wrap. Only used when replacing listeners
+        in downstream components.
+    """
     config = RoBERTaConfig(
+        dtype=_torch_dtype_from_str(dtype),
         embedding_width=hidden_width,
         hidden_width=hidden_width,
         intermediate_width=intermediate_width,
@@ -825,17 +1313,15 @@ def build_pytorch_checkpoint_loader_v2(*, path: Path) -> Callable[
         device = get_torch_default_device()
         encoder = model.shims[0]._model
         assert isinstance(encoder, FromHFHub)
-        from_fsspec = type(encoder).from_fsspec
-
-        # We can discard the previously initialized model entirely
-        # and use the Curated Transformers API to load it from the
-        # hub.
-        model.shims[0]._model = None
-        del encoder
-
         fs = LocalFileSystem()
-        encoder = from_fsspec(fs=fs, model_path=path, device=device)
-        model.shims[0]._model = encoder
+        encoder.from_fsspec_(fs=fs, model_path=path, device=device)
         return model
 
     return load
+
+
+def _torch_dtype_from_str(dtype_as_str: str):
+    dtype = getattr(torch, dtype_as_str, None)
+    if not isinstance(dtype, torch.dtype):
+        raise ValueError(f"Invalid torch dtype `{dtype_as_str}`")
+    return dtype

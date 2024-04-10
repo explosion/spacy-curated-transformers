@@ -67,12 +67,14 @@ HF_MODEL_TYPE_TO_EXAMPLE_MODELS: Dict[str, str] = {
 
 class HfParamSource(Enum):
     MODEL_CONFIG = 1
-    TOKENIZER_CONFIG = 2
+    MODEL_CONFIG_OPTIONAL = 2
+    TOKENIZER_CONFIG = 3
 
 
 # Entrypoint parameters that are common to all curated transformer models.
 COMMON_ENTRYPOINT_PARAMS: Dict[str, HfParamSource] = {
     "attention_probs_dropout_prob": HfParamSource.MODEL_CONFIG,
+    "dtype": HfParamSource.MODEL_CONFIG_OPTIONAL,
     "hidden_act": HfParamSource.MODEL_CONFIG,
     "hidden_dropout_prob": HfParamSource.MODEL_CONFIG,
     "hidden_width": HfParamSource.MODEL_CONFIG,
@@ -99,6 +101,7 @@ ENTRYPOINT_PARAMS_TO_HF_CONFIG_KEYS: Dict[str, str] = {
     "intermediate_width": "intermediate_size",
     "padding_idx": "pad_token_id",
     "embedding_width": "embedding_size",
+    "dtype": "torch_dtype",
 }
 
 
@@ -328,9 +331,9 @@ def _fill_parameters(
     filled_params = {}
     for param_name, source in params_to_fill.items():
         hf_key = ENTRYPOINT_PARAMS_TO_HF_CONFIG_KEYS.get(param_name, param_name)
-        if source == HfParamSource.MODEL_CONFIG:
+        if source in (HfParamSource.MODEL_CONFIG, HfParamSource.MODEL_CONFIG_OPTIONAL):
             value = hf_config.get(hf_key)
-            if value is None:
+            if value is None and source == HfParamSource.MODEL_CONFIG:
                 msg.fail(
                     f"Hugging Face model config has a missing key '{hf_key}'", exits=1
                 )
@@ -341,8 +344,9 @@ def _fill_parameters(
                     f"Hugging Face tokenizer config has a missing key '{hf_key}'",
                     exits=1,
                 )
-        assert value is not None
-        filled_params[param_name] = value
+        assert value is not None or source == HfParamSource.MODEL_CONFIG_OPTIONAL
+        if value is not None:
+            filled_params[param_name] = value
 
     msg.info(title="Filled-in model parameters:")
     msg.table(filled_params)

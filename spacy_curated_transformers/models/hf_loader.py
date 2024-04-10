@@ -27,15 +27,7 @@ def build_hf_transformer_encoder_loader_v1(
         encoder = model.shims[0]._model
         assert isinstance(encoder, FromHFHub)
         device = model.shims[0].device
-        from_hf_hub = type(encoder).from_hf_hub
-
-        # We can discard the previously initialized model entirely
-        # and use the Curated Transformers API to load it from the
-        # hub.
-        model.shims[0]._model = None
-        del encoder
-        encoder = from_hf_hub(name=name, revision=revision, device=device)
-        model.shims[0]._model = encoder
+        encoder.from_hf_hub_(name=name, revision=revision, device=device)
         return model
 
     return load

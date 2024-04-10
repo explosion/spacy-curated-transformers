@@ -87,7 +87,7 @@ cfg_string_last_layer_listener = """
     all_layer_outputs = False
 
     [components.transformer.model]
-    @architectures = "spacy-curated-transformers.BertTransformer.v1"
+    @architectures = "spacy-curated-transformers.BertTransformer.v2"
     vocab_size = 28996
     num_hidden_layers = 1
     hidden_width = 60
@@ -135,7 +135,7 @@ cfg_string_scalar_weighting_layer_listener = """
     all_layer_outputs = True
 
     [components.transformer.model]
-    @architectures = "spacy-curated-transformers.BertTransformer.v1"
+    @architectures = "spacy-curated-transformers.BertTransformer.v2"
     vocab_size = 28996
     num_hidden_layers = 1
     hidden_width = 60
@@ -661,7 +661,7 @@ def test_replace_listeners(cfg_string, listener_name, listener_entrypoint):
     assert transformer.model.name == "transformer_model"
     assert (
         nlp.config["components"]["transformer"]["model"]["@architectures"]
-        == "spacy-curated-transformers.BertTransformer.v1"
+        == "spacy-curated-transformers.BertTransformer.v2"
     )
     assert (
         nlp.config["components"]["tagger"]["model"]["tok2vec"]["@architectures"]
@@ -688,7 +688,7 @@ def test_replace_listeners(cfg_string, listener_name, listener_entrypoint):
     assert tagger_tok2vec.layers[1].name == listener_name
     assert (
         nlp.config["components"]["tagger"]["model"]["tok2vec"]["@architectures"]
-        == "spacy-curated-transformers.BertTransformer.v1"
+        == "spacy-curated-transformers.BertTransformer.v2"
     )
     assert (
         nlp.config["components"]["tagger"]["model"]["tok2vec"]["wrapped_listener"][
