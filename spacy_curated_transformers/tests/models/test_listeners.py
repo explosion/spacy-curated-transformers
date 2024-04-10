@@ -22,7 +22,7 @@ cfg_string_transformer_layers_listener = """
     all_layer_outputs = True
 
     [components.transformer.model]
-    @architectures = "spacy-curated-transformers.BertTransformer.v1"
+    @architectures = "spacy-curated-transformers.BertTransformer.v2"
     vocab_size = 28996
     num_hidden_layers = 2
     hidden_width = 60

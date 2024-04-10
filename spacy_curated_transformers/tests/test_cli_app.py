@@ -29,7 +29,7 @@ pipeline = ["transformer"]
 [components.transformer]
 factory = "curated_transformer"
 [components.transformer.model]
-@architectures = "spacy-curated-transformers.BertTransformer.v1"
+@architectures = "spacy-curated-transformers.BertTransformer.v2"
 piece_encoder = {"@architectures":"spacy-curated-transformers.BertWordpieceEncoder.v1"}
 [components.transformer.model.with_spans]
 @architectures = "spacy-curated-transformers.WithStridedSpans.v1"
@@ -46,7 +46,7 @@ pipeline = ["transformer"]
 factory = "curated_transformer"
 
 [components.transformer.model]
-@architectures = "spacy-curated-transformers.BertTransformer.v1"
+@architectures = "spacy-curated-transformers.BertTransformer.v2"
 piece_encoder = {"@architectures":"spacy-curated-transformers.BertWordpieceEncoder.v1"}
 with_spans = {"@architectures":"spacy-curated-transformers.WithStridedSpans.v1"}
 attention_probs_dropout_prob = 0.1
@@ -72,15 +72,15 @@ vocab_size = 1124
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "hf-internal-testing/tiny-random-bert"
-revision = "main"
+revision = "8fc97e155588266e09c9f37d4a9608e1a65a279e"
 
 [initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "hf-internal-testing/tiny-random-bert"
-revision = "main"
+revision = "8fc97e155588266e09c9f37d4a9608e1a65a279e"
 """,
 
-["--model-name", "hf-internal-testing/tiny-random-bert", "--model-revision", "main"],
+["--model-name", "hf-internal-testing/tiny-random-bert", "--model-revision", "8fc97e155588266e09c9f37d4a9608e1a65a279e"],
 ),
 
 (
@@ -92,7 +92,7 @@ pipeline = ["transformer"]
 [components.transformer]
 factory = "curated_transformer"
 [components.transformer.model]
-@architectures = "spacy-curated-transformers.CamembertTransformer.v1"
+@architectures = "spacy-curated-transformers.CamembertTransformer.v2"
 piece_encoder = {"@architectures":"spacy-curated-transformers.ByteBpeEncoder.v1"}
 [components.transformer.model.with_spans]
 @architectures = "spacy-curated-transformers.WithStridedSpans.v1"
@@ -109,10 +109,11 @@ pipeline = ["transformer"]
 factory = "curated_transformer"
 
 [components.transformer.model]
-@architectures = "spacy-curated-transformers.CamembertTransformer.v1"
+@architectures = "spacy-curated-transformers.CamembertTransformer.v2"
 piece_encoder = {"@architectures":"spacy-curated-transformers.ByteBpeEncoder.v1"}
 with_spans = {"@architectures":"spacy-curated-transformers.WithStridedSpans.v1"}
 attention_probs_dropout_prob = 0.1
+dtype = "float32"
 hidden_act = "gelu"
 hidden_dropout_prob = 0.1
 hidden_width = 32
@@ -155,7 +156,7 @@ pipeline = ["transformer"]
 [components.transformer]
 factory = "curated_transformer"
 [components.transformer.model]
-@architectures = "spacy-curated-transformers.RobertaTransformer.v1"
+@architectures = "spacy-curated-transformers.RobertaTransformer.v2"
 piece_encoder = {"@architectures":"spacy-curated-transformers.ByteBpeEncoder.v1"}
 [components.transformer.model.with_spans]
 @architectures = "spacy-curated-transformers.WithStridedSpans.v1"
@@ -182,7 +183,7 @@ pipeline = ["transformer"]
 factory = "curated_transformer"
 
 [components.transformer.model]
-@architectures = "spacy-curated-transformers.RobertaTransformer.v1"
+@architectures = "spacy-curated-transformers.RobertaTransformer.v2"
 piece_encoder = {"@architectures":"spacy-curated-transformers.ByteBpeEncoder.v1"}
 with_spans = {"@architectures":"spacy-curated-transformers.WithStridedSpans.v1"}
 attention_probs_dropout_prob = 0.1
@@ -208,15 +209,15 @@ vocab_size = 1000
 [initialize.components.transformer.encoder_loader]
 @model_loaders = "spacy-curated-transformers.HFTransformerEncoderLoader.v1"
 name = "hf-internal-testing/tiny-random-roberta"
-revision = "main"
+revision = "73def02fc9f13169a1ce21ad4602aae38d7cbd5a"
 
 [initialize.components.transformer.piecer_loader]
 @model_loaders = "spacy-curated-transformers.HFPieceEncoderLoader.v1"
 name = "hf-internal-testing/tiny-random-roberta"
-revision = "main"
+revision = "73def02fc9f13169a1ce21ad4602aae38d7cbd5a"
 """,
 
-["--model-name", "hf-internal-testing/tiny-random-roberta", "--model-revision", "main"],
+["--model-name", "hf-internal-testing/tiny-random-roberta", "--model-revision", "73def02fc9f13169a1ce21ad4602aae38d7cbd5a"],
 ),
 
 (
@@ -228,7 +229,7 @@ pipeline = ["transformer"]
 [components.transformer]
 factory = "curated_transformer"
 [components.transformer.model]
-@architectures = "spacy-curated-transformers.XlmrTransformer.v1"
+@architectures = "spacy-curated-transformers.XlmrTransformer.v2"
 piece_encoder = {"@architectures":"spacy-curated-transformers.XlmrSentencepieceEncoder.v1"}
 [components.transformer.model.with_spans]
 @architectures = "spacy-curated-transformers.WithStridedSpans.v1"
@@ -256,8 +257,9 @@ pipeline = ["transformer"]
 factory = "curated_transformer"
 
 [components.transformer.model]
-@architectures = "spacy-curated-transformers.XlmrTransformer.v1"
+@architectures = "spacy-curated-transformers.XlmrTransformer.v2"
 attention_probs_dropout_prob = 0.1
+dtype = "float32"
 hidden_act = "gelu"
 hidden_dropout_prob = 0.1
 hidden_width = 32
