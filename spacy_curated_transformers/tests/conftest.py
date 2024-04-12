@@ -40,7 +40,6 @@ def pytest_runtest_setup(item):
 
 @pytest.fixture
 def test_dir(request):
-    print(request.fspath)
     return Path(request.fspath).parent
 
 

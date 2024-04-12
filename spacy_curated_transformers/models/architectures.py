@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Callable, List, Optional, Tuple, Union, cast
 
 import torch
+import torch.nn as nn
 from curated_transformers.layers import Activation, AttentionMask
 from curated_transformers.models import (
     ALBERTConfig,
@@ -1181,7 +1182,7 @@ def _pytorch_encoder(
         grad_scaler_config["enabled"] = mixed_precision
 
     model = PyTorchWrapper_v2(
-        encoder,
+        _EncoderWrapper(encoder),
         convert_inputs=partial(
             _convert_inputs,
             max_model_seq_len=model_max_length,
@@ -1311,7 +1312,7 @@ def build_pytorch_checkpoint_loader_v2(*, path: Path) -> Callable[
 
     def load(model, X=None, Y=None):
         device = get_torch_default_device()
-        encoder = model.shims[0]._model
+        encoder = model.shims[0]._model.curated_encoder
         assert isinstance(encoder, FromHFHub)
         fs = LocalFileSystem()
         encoder.from_fsspec_(fs=fs, model_path=path, device=device)
@@ -1325,3 +1326,16 @@ def _torch_dtype_from_str(dtype_as_str: str):
     if not isinstance(dtype, torch.dtype):
         raise ValueError(f"Invalid torch dtype `{dtype_as_str}`")
     return dtype
+
+
+class _EncoderWrapper(nn.Module):
+    """Small wrapper to add a prefix that can be used by eg. learning rate
+    schedules.
+    """
+
+    def __init__(self, encoder: nn.Module):
+        super().__init__()
+        self.curated_encoder = encoder
+
+    def forward(self, *args, **kwargs):
+        return self.curated_encoder.forward(*args, **kwargs)
