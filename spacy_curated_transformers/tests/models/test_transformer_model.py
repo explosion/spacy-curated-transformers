@@ -180,8 +180,6 @@ def test_pytorch_checkpoint_loader(test_config):
     model.initialize()
 
 
-@pytest.mark.slow
-@pytest.mark.skipif(not has_huggingface_hub, reason="requires huggingface hub")
 @pytest.mark.parametrize(
     "test_config",
     [
@@ -208,6 +206,10 @@ def test_encoder_prefix(test_config):
     # Curated Transformers needs the config to get the model hyperparameters.
     with_spans = build_with_strided_spans_v1(stride=96, window=128)
     model = model_factory(
+        hidden_width=32,
+        intermediate_width=37,
+        num_hidden_layers=4,
+        num_attention_heads=4,
         piece_encoder=piece_encoder, vocab_size=vocab_size, with_spans=with_spans
     )
 
