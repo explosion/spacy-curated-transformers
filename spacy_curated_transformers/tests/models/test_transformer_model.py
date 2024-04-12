@@ -210,7 +210,9 @@ def test_encoder_prefix(test_config):
         intermediate_width=37,
         num_hidden_layers=4,
         num_attention_heads=4,
-        piece_encoder=piece_encoder, vocab_size=vocab_size, with_spans=with_spans
+        piece_encoder=piece_encoder,
+        vocab_size=vocab_size,
+        with_spans=with_spans,
     )
 
     for name, _ in model.get_ref("transformer").shims[0]._model.named_parameters():
