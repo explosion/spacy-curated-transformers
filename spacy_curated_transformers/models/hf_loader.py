@@ -24,7 +24,7 @@ def build_hf_transformer_encoder_loader_v1(
     """
 
     def load(model, X=None, Y=None):
-        encoder = model.shims[0]._model
+        encoder = model.shims[0]._model.curated_encoder
         assert isinstance(encoder, FromHFHub)
         device = model.shims[0].device
         encoder.from_hf_hub_(name=name, revision=revision, device=device)

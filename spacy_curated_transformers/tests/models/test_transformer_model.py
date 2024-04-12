@@ -178,3 +178,44 @@ def test_pytorch_checkpoint_loader(test_config):
         "spacy-curated-transformers.PyTorchCheckpointLoader.v1"
     )(path=Path(checkpoint_path))
     model.initialize()
+
+
+@pytest.mark.parametrize(
+    "test_config",
+    [
+        (
+            build_albert_transformer_model_v1,
+            build_sentencepiece_encoder_v1(),
+            1000,
+        ),
+        (
+            build_bert_transformer_model_v1,
+            build_bert_wordpiece_encoder_v1(),
+            1000,
+        ),
+        (
+            build_roberta_transformer_model_v1,
+            build_byte_bpe_encoder_v1(),
+            1000,
+        ),
+    ],
+)
+def test_encoder_prefix(test_config):
+    model_factory, piece_encoder, vocab_size = test_config
+
+    # Curated Transformers needs the config to get the model hyperparameters.
+    with_spans = build_with_strided_spans_v1(stride=96, window=128)
+    model = model_factory(
+        hidden_width=32,
+        intermediate_width=37,
+        num_hidden_layers=4,
+        num_attention_heads=4,
+        piece_encoder=piece_encoder,
+        vocab_size=vocab_size,
+        with_spans=with_spans,
+    )
+
+    for name, _ in model.get_ref("transformer").shims[0]._model.named_parameters():
+        assert name.startswith(
+            "curated_encoder."
+        ), f"Parameter name '{name} does not start with 'curated_encoder'"
