@@ -6,6 +6,7 @@ from .architectures import (
     build_camembert_transformer_model_v1,
     build_camembert_transformer_model_v2,
     build_pytorch_checkpoint_loader_v1,
+    build_pytorch_checkpoint_loader_v2,
     build_roberta_transformer_model_v1,
     build_roberta_transformer_model_v2,
     build_xlmr_transformer_model_v1,

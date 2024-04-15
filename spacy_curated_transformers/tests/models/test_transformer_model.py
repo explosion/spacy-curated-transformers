@@ -169,7 +169,6 @@ def test_pytorch_checkpoint_loader(test_config):
 
     checkpoint_path = hf_hub_download(repo_id=model_name, filename="pytorch_model.bin")
     # Curated Transformers needs the config to get the model hyperparameters.
-    hf_hub_download(repo_id=model_name, filename="config.json")
     with_spans = build_with_strided_spans_v1(stride=96, window=128)
     model = model_factory(
         piece_encoder=piece_encoder, vocab_size=vocab_size, with_spans=with_spans
