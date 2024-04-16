@@ -12,7 +12,7 @@ from curated_transformers.models import (
     BERTEncoder,
     CamemBERTEncoder,
     EncoderModule,
-    FromHFHub,
+    FromHF,
     ModelOutput,
     RoBERTaConfig,
     RoBERTaEncoder,
@@ -1313,7 +1313,7 @@ def build_pytorch_checkpoint_loader_v2(*, path: Path) -> Callable[
     def load(model, X=None, Y=None):
         device = get_torch_default_device()
         encoder = model.shims[0]._model.curated_encoder
-        assert isinstance(encoder, FromHFHub)
+        assert isinstance(encoder, FromHF)
         fs = LocalFileSystem()
         encoder.from_fsspec_(fs=fs, model_path=path, device=device)
         return model
