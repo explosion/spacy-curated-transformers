@@ -1,6 +1,6 @@
 from typing import Callable, List, Optional
 
-from curated_transformers.models import FromHFHub
+from curated_transformers.models import FromHF
 from spacy.tokens import Doc
 
 from .types import TorchTransformerModelT
@@ -25,7 +25,7 @@ def build_hf_transformer_encoder_loader_v1(
 
     def load(model, X=None, Y=None):
         encoder = model.shims[0]._model.curated_encoder
-        assert isinstance(encoder, FromHFHub)
+        assert isinstance(encoder, FromHF)
         device = model.shims[0].device
         encoder.from_hf_hub_(name=name, revision=revision, device=device)
         return model
