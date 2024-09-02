@@ -10,6 +10,7 @@ on:
 jobs:
   build_wheels:
     name: Build universal wheel
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
