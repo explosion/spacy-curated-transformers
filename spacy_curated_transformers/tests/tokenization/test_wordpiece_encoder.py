@@ -2,6 +2,8 @@ from tempfile import TemporaryDirectory
 
 import pytest
 import spacy
+from spacy.tokens import Doc
+from spacy.vocab import Vocab
 from thinc.api import Ragged, get_current_ops
 
 from spacy_curated_transformers._compat import has_hf_transformers, transformers
@@ -14,6 +16,7 @@ from spacy_curated_transformers.tokenization.wordpiece_encoder import (
     build_wordpiece_encoder_loader_v1,
     build_wordpiece_encoder_v1,
 )
+from spacy.attrs import IS_SPACE
 
 
 def test_wordpiece_encoder_local_model(wordpiece_toy_encoder, sample_docs):
@@ -203,6 +206,32 @@ def test_bert_preprocess():
     assert _bert_preprocess("-") == ["-"]
     assert _bert_preprocess("") == []
     assert _bert_preprocess("Mw.-St.") == ["Mw", ".", "-", "St", "."]
+
+
+@pytest.fixture
+def encoder():
+    encoder = build_wordpiece_encoder_v1()
+    encoder.init = build_hf_piece_encoder_loader_v1(name="bert-base-cased")
+    encoder.initialize()
+    return encoder
+
+
+@pytest.mark.parametrize(
+    "strings",
+    [["a", "b", "c"], ["a", " ", "c"], ["cat", "sat", "mat"], [" "], [" ", "hi"]],
+)
+def test_wp_whitespace_encoding(wordpiece_toy_encoder, strings):
+    doc = Doc(
+        Vocab(lex_attr_getters={IS_SPACE: lambda w: int(w.isspace())}), words=strings
+    )
+    encoding = wordpiece_toy_encoder.predict([doc])
+    # Strip bos and eos markers
+    doc_encoding = encoding[0][1:-1]
+    for i, token in enumerate(doc):
+        if token.is_space:
+            assert doc_encoding.lengths[i] == 0
+        else:
+            assert doc_encoding.lengths[i] >= 1
 
 
 def _check_toy_encoder(encoding):

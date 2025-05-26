@@ -74,13 +74,17 @@ def byte_bpe_encoder_forward(
         lens = [1]
 
         for idx, token in enumerate(doc):
-            # GPT-2/RoBERTa tokenization preserves preceding space character.
-            if idx > 0:
-                text = doc[idx - 1].whitespace_ + token.text
+            if token.is_space:
+                piece_ids = []
             else:
-                text = token.text
+                # GPT-2/RoBERTa tokenization preserves preceding space character.
+                if idx > 0:
+                    text = doc[idx - 1].whitespace_ + token.text
+                else:
+                    text = token.text
 
-            piece_ids = bbp.encode_as_ids(text)
+                piece_ids = bbp.encode_as_ids(text)
+                print("Token", piece_ids)
 
             doc_pieces.extend(piece_ids)
             lens.append(len(piece_ids))

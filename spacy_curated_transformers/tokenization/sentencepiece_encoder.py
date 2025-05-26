@@ -81,7 +81,13 @@ def sentencepiece_encoder_forward(
         lens = [1]
 
         for token in doc:
-            piece_ids = spp.encode_as_ids(token.text)
+            if token.is_space:
+                # This seems to actually be the default, but we rely on this behaviour
+                # (empty array returned for whitespace tokens), so we handle it as a
+                # condition like we do for the other encoders.
+                piece_ids = []
+            else:
+                piece_ids = spp.encode_as_ids(token.text)
             doc_pieces.extend(piece_ids)
             lens.append(len(piece_ids))
 
@@ -97,7 +103,9 @@ def sentencepiece_encoder_forward(
     return pieces, lambda dY: []
 
 
-def build_sentencepiece_encoder_loader_v1(*, path: Path) -> Callable[
+def build_sentencepiece_encoder_loader_v1(
+    *, path: Path
+) -> Callable[
     [Tok2PiecesModelT, Optional[Tok2PiecesInT], Optional[Tok2PiecesInT]],
     Tok2PiecesModelT,
 ]:
