@@ -84,7 +84,6 @@ def byte_bpe_encoder_forward(
                     text = token.text
 
                 piece_ids = bbp.encode_as_ids(text)
-                print("Token", piece_ids)
 
             doc_pieces.extend(piece_ids)
             lens.append(len(piece_ids))
