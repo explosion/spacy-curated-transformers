@@ -87,13 +87,7 @@ def _convert_byte_bpe_encoder(
     serialized = tokenizer.backend_tokenizer.to_str(True)  # type: ignore
     deserialized = json.loads(serialized)
     vocab_merges = deserialized["model"]
-    # Previously the code assumed merges were strings, but the version of HF transformers
-    # I'm using has these as lists. I haven't looked deeply into this but I'm going to just
-    # handle the condition
-    if vocab_merges.get("merges") and isinstance(vocab_merges["merges"], list):
-        merges = [tuple(x) for x in vocab_merges["merges"]]
-    else:
-        merges = [tuple(merge.split(" ")) for merge in vocab_merges["merges"]]
+    merges = [tuple(merge.split(" ")) for merge in vocab_merges["merges"]]
     model.attrs["byte_bpe_processor"] = ByteBPEProcessor(vocab_merges["vocab"], merges)
     model.attrs["bos_piece"] = tokenizer.bos_token  # type: ignore
     model.attrs["eos_piece"] = tokenizer.eos_token  # type: ignore

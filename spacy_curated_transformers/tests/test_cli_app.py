@@ -311,16 +311,14 @@ def test_fill_config_transformer(config, output, extra_args):
         with open(file_path, "w", encoding="utf8") as f:
             f.writelines([config])
 
-        result = CliRunner().invoke(
-            app,
-            [
-                "init",
-                "fill-curated-transformer",
-                str(file_path),
-                str(output_path),
-            ]
-            + extra_args,
-        )
+        args = [
+            "init",
+            "fill-curated-transformer",
+            str(file_path),
+            str(output_path),
+        ] + extra_args
+        print(" ".join(args))
+        result = CliRunner().invoke(app, args)
         try:
             assert result.exit_code == 0
         except AssertionError:
