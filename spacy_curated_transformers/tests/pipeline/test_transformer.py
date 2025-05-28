@@ -446,7 +446,8 @@ def test_xlmr_transformer_pipe_against_hf():
         torch_assertclose(
             hf_doc_encoding[:encoding_len][1:-1],
             torch.tensor(doc._.trf_data.last_hidden_layer_state.dataXd),
-            atol=1e-3, rtol=1e-3
+            atol=1e-3,
+            rtol=1e-3,
         )
 
 
