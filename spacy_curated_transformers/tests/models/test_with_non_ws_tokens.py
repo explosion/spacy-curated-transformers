@@ -1,5 +1,6 @@
 from typing import List
 
+import pytest
 from thinc.api import Model, chain
 from thinc.types import Floats2d, Ragged
 
@@ -32,6 +33,7 @@ def _mock_transformer() -> Model[List[Floats2d], TransformerModelOutput]:
     return Model("mock_transformer", forward)
 
 
+@pytest.mark.xfail(reason="Removed need for non_ws_tokens")
 def test_with_non_ws_tokens(sample_docs_with_spaces, wordpiece_toy_encoder):
     mock_transformer = _mock_transformer()
     model = with_non_ws_tokens(

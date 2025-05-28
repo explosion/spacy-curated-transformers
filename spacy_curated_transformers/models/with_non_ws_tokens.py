@@ -68,23 +68,37 @@ def with_non_ws_tokens_forward(
     model: Model, X: WsTokenAdapterInT, is_train: bool
 ) -> Tuple[WsTokenAdapterOutT, WsTokenAdapterBackpropT]:
     inner: Model[Tok2PiecesInT, WsTokenAdapterOutT] = model.layers[0]
-    tokens, ws_counts = _filter_tokens(X)
-    Y_no_ws, backprop_no_ws = inner(tokens, is_train)
-
-    # Note: we modify the model outputs in-place. Since we are wrapping the
-    # model, there should be no other consumers. Not sure yet if the same
-    # applies to the gradient (e.g. consider summing two encoders of the
-    # same width downstream.)
-
-    alignments = _create_alignments(model, Y_no_ws, ws_counts)
-    _add_whitespace_tokens(model, Y_no_ws, alignments)
-
-    def backprop(dY: List[List[Ragged]]) -> Any:
-        _remove_whitespace_tokens(model, dY, alignments)
-        backprop_no_ws(dY)
-        return []
-
-    return Y_no_ws, backprop
+    # The transformer doesn't expect whitespace tokens, so at some stage
+    # they need to be removed before we pass the IDs in, as encoded by
+    # the tokenizer.
+    # Previous implementations did this as a wrapper around the whole
+    # process: we removed the whitespace token IDs, encoded with the
+    # transformer, and then recalculated the output arrays, inserting
+    # empty rows for the whitespace tokens.
+    # This was expensive, and the output manipulation is actually unnecessary.
+    # The pooling layers which consume these representations actually support
+    # lengths 0, for tokens in the document that don't correspond to any
+    # wordpieces. We therefore just need to have 0-length entries in
+    # our ragged array.
+    # Here's a reminder of how the ragged representation works.
+    # So let's say we have:
+    # "We went to Timbuktu"
+    # And this is wordpieced like:
+    # [["We"], ["went"], ["to"], ["Tim", "buktu"]]
+    # We'll have a ragged with regions of lengths [1, 1, 1, 2]
+    # -- it's basically a nested list with the arrays concatenated.
+    # If we have a whitespace token, we won't have any wordpiece
+    # corresponding to it. This means we'll end up with a 0-length
+    # alignment. This is fine -- the pooling operations all handle
+    # 0-length ragged entries.
+    # Instead of all this recalculation, what we've done instead is
+    # update the tokenizers to make sure they insert the 0-length
+    # entry for the whitespace tokens.
+    # This lets us make this operation a noop. We leave the function
+    # here however, so that the models trained previously still load
+    # correctly. We need to remove this in future when we retrain.
+    Y, backprop = inner(X, is_train=is_train)
+    return Y, backprop
 
 
 def with_non_ws_tokens_init(
@@ -92,6 +106,7 @@ def with_non_ws_tokens_init(
     X: Optional[WsTokenAdapterInT] = None,
     Y: Optional[WsTokenAdapterInT] = None,
 ) -> None:
+    # Deprecated
     model.layers[0].initialize(X=_filter_tokens(X)[0] if X is not None else None, Y=Y)
 
 
@@ -99,6 +114,7 @@ def _create_alignments(
     model: Model, output: WsTokenAdapterOutT, ws_counts: List[Counter]
 ) -> List[Alignment]:
     """Create an alignment between whitespace and non-whitespace sequences."""
+    # Deprecated
     alignments = []
     for doc_output, doc_ws_counts in zip(output.all_outputs, ws_counts):
         doc_alignments = []
@@ -152,6 +168,7 @@ def _filter_tokens(docs: List[Doc]) -> Tuple[Tok2PiecesInT, List[Counter]]:
     """Filter out whitespace tokens. Returns the non-whitespace tokens
     and a mapping from the (non-whitespace) token offset to the number
     of whitespaces that preceded the token."""
+    # Deprecated
     tokens = []
     ws_counts = []
     for doc in docs:
@@ -174,6 +191,7 @@ def _add_whitespace_tokens(
     model: Model, Y_no_ws: WsTokenAdapterOutT, alignments: List[Alignment]
 ):
     """Add stub representations for whitespace tokens."""
+    # Deprecated
     for Y_doc, doc_alignment in zip(Y_no_ws.all_outputs, alignments):
         if doc_alignment.has_no_whitespace:
             continue
@@ -204,6 +222,7 @@ def _remove_whitespace_tokens(
     model: Model, dY: List[List[Ragged]], alignments: List[Alignment]
 ):
     """Remove representations for whitespace tokens."""
+    # Deprecated
     for dY_doc, doc_alignment in zip(dY, alignments):
         if doc_alignment.has_no_whitespace:
             continue

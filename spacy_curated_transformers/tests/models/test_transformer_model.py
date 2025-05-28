@@ -108,26 +108,26 @@ def test_input_with_spaces(sample_docs_with_spaces, stride, window, hf_model):
     num_ouputs = Y.num_outputs
     Y = Y.last_hidden_layer_states
     assert len(Y) == 2
-    model.ops.xp.testing.assert_array_equal(Y[0].lengths, [1, 1, 1, 1, 1, 1, 1, 2, 2])
-    assert Y[0].dataXd.shape == (11, hidden_width)
+    model.ops.xp.testing.assert_array_equal(Y[0].lengths, [1, 1, 1, 1, 0, 1, 1, 2, 2])
+    assert Y[0].dataXd.shape == (10, hidden_width)
     model.ops.xp.testing.assert_array_equal(
-        Y[1].lengths, [1, 1, 1, 1, 1, 1, 2, 1, 2, 1]
+        Y[1].lengths, [1, 1, 0, 1, 1, 0, 2, 1, 2, 0]
     )
-    assert Y[1].dataXd.shape == (12, hidden_width)
+    assert Y[1].dataXd.shape == (9, hidden_width)
 
     # Backprop zeros to verify that backprop doesn't fail.
     dY = [
         [
             Ragged(
-                model.ops.alloc2f(11, 768),
-                lengths=model.ops.asarray1i([1, 1, 1, 1, 1, 1, 1, 2, 2]),
+                model.ops.alloc2f(10, 768),
+                lengths=model.ops.asarray1i([1, 1, 1, 1, 0, 1, 1, 2, 2]),
             )
             for _ in range(num_ouputs)
         ],
         [
             Ragged(
-                model.ops.alloc2f(11, 768),
-                lengths=model.ops.asarray1i([1, 1, 1, 1, 1, 2, 1, 2, 1]),
+                model.ops.alloc2f(9, 768),
+                lengths=model.ops.asarray1i([1, 1, 0, 1, 1, 0, 2, 1, 2, 0]),
             )
             for _ in range(num_ouputs)
         ],

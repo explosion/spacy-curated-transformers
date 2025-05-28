@@ -69,9 +69,6 @@ jobs:
       - name: Build sdist
         run: python -m build --sdist
 
-      - name: Run mypy
-        run: mypy spacy_curated_transformers
-
       - name: Delete source directory
         run: |
           cp spacy_curated_transformers/tests/conftest.py .

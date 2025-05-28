@@ -92,15 +92,18 @@ def wordpiece_encoder_forward(
         lens = [1]
 
         for token in doc:
-            text = token.lower_ if lowercase else token.text
-            if strip_accents:
-                text = _strip_accents(text)
+            if token.is_space:
+                piece_ids = []
+            else:
+                text = token.lower_ if lowercase else token.text
+                if strip_accents:
+                    text = _strip_accents(text)
 
-            piece_ids = [
-                unk_id if token_id == -1 else token_id
-                for t in preprocess(text)
-                for token_id in wpp.encode(t)[0]
-            ]
+                piece_ids = [
+                    unk_id if token_id == -1 else token_id
+                    for t in preprocess(text)
+                    for token_id in wpp.encode(t)[0]
+                ]
 
             doc_pieces.extend(piece_ids)
             lens.append(len(piece_ids))

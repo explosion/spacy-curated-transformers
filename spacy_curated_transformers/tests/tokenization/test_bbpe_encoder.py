@@ -1,4 +1,7 @@
 import pytest
+from spacy.attrs import IS_SPACE
+from spacy.tokens import Doc
+from spacy.vocab import Vocab
 from thinc.api import Ragged, get_current_ops, registry
 
 from spacy_curated_transformers._compat import has_hf_transformers
@@ -47,6 +50,24 @@ def test_serialize(toy_encoder):
         toy_encoder.attrs["byte_bpe_processor"].merges
         == toy_encoder2.attrs["byte_bpe_processor"].merges
     )
+
+
+@pytest.mark.parametrize(
+    "strings",
+    [["a", "b", "c"], ["a", " ", "c"], ["cat", "sat", "mat"], [" "], [" ", "hi"]],
+)
+def test_bbpe_whitespace_encoding(toy_encoder, strings):
+    doc = Doc(
+        Vocab(lex_attr_getters={IS_SPACE: lambda w: int(w.isspace())}), words=strings
+    )
+    encoding = toy_encoder.predict([doc])
+    # Strip bos and eos markers
+    doc_encoding = encoding[0][1:-1]
+    for i, token in enumerate(doc):
+        if token.is_space:
+            assert doc_encoding.lengths[i] == 0
+        else:
+            assert doc_encoding.lengths[i] >= 1
 
 
 @pytest.mark.slow
