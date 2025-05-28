@@ -1,6 +1,6 @@
-import pytest
 from typing import List
 
+import pytest
 from thinc.api import Model, chain
 from thinc.types import Floats2d, Ragged
 

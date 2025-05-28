@@ -1,4 +1,7 @@
 import pytest
+from spacy.attrs import IS_SPACE
+from spacy.tokens import Doc
+from spacy.vocab import Vocab
 from thinc.api import Ragged, get_current_ops, registry
 
 from spacy_curated_transformers._compat import has_hf_transformers
@@ -8,9 +11,6 @@ from spacy_curated_transformers.tokenization.hf_loader import (
 from spacy_curated_transformers.tokenization.sentencepiece_encoder import (
     build_sentencepiece_encoder_v1,
 )
-from spacy.tokens import Doc
-from spacy.vocab import Vocab
-from spacy.attrs import IS_SPACE
 
 
 @pytest.fixture

@@ -2,6 +2,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 import spacy
+from spacy.attrs import IS_SPACE
 from spacy.tokens import Doc
 from spacy.vocab import Vocab
 from thinc.api import Ragged, get_current_ops
@@ -16,7 +17,6 @@ from spacy_curated_transformers.tokenization.wordpiece_encoder import (
     build_wordpiece_encoder_loader_v1,
     build_wordpiece_encoder_v1,
 )
-from spacy.attrs import IS_SPACE
 
 
 def test_wordpiece_encoder_local_model(wordpiece_toy_encoder, sample_docs):
